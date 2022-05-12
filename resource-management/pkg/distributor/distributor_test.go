@@ -1,4 +1,4 @@
-package dispatcher
+package distributor
 
 import (
 	"fmt"
@@ -22,32 +22,32 @@ var singleTestLock = sync.Mutex{}
 
 var defaultLocBeijing_RP1 = location.NewLocation(location.Beijing, location.ResourcePartition1)
 
-func setUp() *ResourceDispatcher {
+func setUp() *ResourceDistributor {
 	singleTestLock.Lock()
-	return GetResourceDispatcher()
+	return GetResourceDistributor()
 }
 
-func tearDown(dispatcher *ResourceDispatcher) {
+func tearDown(distributor *ResourceDistributor) {
 	defer singleTestLock.Unlock()
 
 	// flush node stores
-	dispatcher.defaultNodeStore = createNodeStore()
+	distributor.defaultNodeStore = createNodeStore()
 
 	// flush nodeEventQueueMap
-	dispatcher.nodeEventQueueMap = make(map[string]*cache.NodeEventQueue)
+	distributor.nodeEventQueueMap = make(map[string]*cache.NodeEventQueue)
 
 	// flush clientToStores map
-	dispatcher.clientToStores = make(map[string][]*storage.VirtualNodeStore)
+	distributor.clientToStores = make(map[string][]*storage.VirtualNodeStore)
 }
 
-func TestDispatcherInit(t *testing.T) {
-	dispatcher := setUp()
-	defer tearDown(dispatcher)
+func TestDistributorInit(t *testing.T) {
+	distributor := setUp()
+	defer tearDown(distributor)
 
-	assert.NotNil(t, dispatcher, "Dispatcher cannot be nil")
+	assert.NotNil(t, distributor, "Distributor cannot be nil")
 
 	// check default virtual node stores
-	defaultNodeStores := dispatcher.defaultNodeStore.GetVirtualStores()
+	defaultNodeStores := distributor.defaultNodeStore.GetVirtualStores()
 	assert.Equal(t, true, len(*defaultNodeStores) > 500, "Expecting virtual store number >= 500")
 
 	lower := float64(0)
@@ -71,7 +71,7 @@ func TestDispatcherInit(t *testing.T) {
 	}
 }
 
-func measureProcessEvent(t *testing.T, dis *ResourceDispatcher, eventType string, events []*event.NodeEvent, previousNodeCount int) {
+func measureProcessEvent(t *testing.T, dis *ResourceDistributor, eventType string, events []*event.NodeEvent, previousNodeCount int) {
 	start := time.Now()
 	result, rvMap := dis.ProcessEvents(events)
 	duration := time.Since(start)
@@ -91,14 +91,14 @@ func measureProcessEvent(t *testing.T, dis *ResourceDispatcher, eventType string
 }
 
 func TestAddNodes(t *testing.T) {
-	dispatcher := setUp()
-	defer tearDown(dispatcher)
+	distributor := setUp()
+	defer tearDown(distributor)
 
 	nodeCounts := []int{10, 100, 1000, 10000, 100000, 1000000}
 	previousNodeCount := 0
 	for i := 0; i < len(nodeCounts); i++ {
 		eventsAdd := generateAddNodeEvent(nodeCounts[i])
-		measureProcessEvent(t, dispatcher, "AddNode", eventsAdd, previousNodeCount)
+		measureProcessEvent(t, distributor, "AddNode", eventsAdd, previousNodeCount)
 		previousNodeCount += nodeCounts[i]
 	}
 }
@@ -143,43 +143,43 @@ func createRandomNode(rv int) *types.Node {
 }
 
 func TestUpdateNodes(t *testing.T) {
-	dispatcher := setUp()
-	defer tearDown(dispatcher)
+	distributor := setUp()
+	defer tearDown(distributor)
 
 	nodeCounts := []int{10, 100, 1000, 10000, 100000, 1000000}
 	previousNodeCount := 0
 	for i := 0; i < len(nodeCounts); i++ {
-		addAndUpdateNodes(t, dispatcher, nodeCounts[i], previousNodeCount)
+		addAndUpdateNodes(t, distributor, nodeCounts[i], previousNodeCount)
 		previousNodeCount += nodeCounts[i]
 	}
 }
 
-func addAndUpdateNodes(t *testing.T, dispatcher *ResourceDispatcher, eventNum int, previousNodeCount int) {
+func addAndUpdateNodes(t *testing.T, distributor *ResourceDistributor, eventNum int, previousNodeCount int) {
 	eventsAdd := generateAddNodeEvent(eventNum)
-	measureProcessEvent(t, dispatcher, "AddNode", eventsAdd, previousNodeCount)
+	measureProcessEvent(t, distributor, "AddNode", eventsAdd, previousNodeCount)
 	// update nodes
 	eventsUpdate := generateUpdateNodeEvents(eventsAdd)
-	measureProcessEvent(t, dispatcher, "UpdateNode", eventsUpdate, previousNodeCount)
+	measureProcessEvent(t, distributor, "UpdateNode", eventsUpdate, previousNodeCount)
 }
 
 func TestRegisterClient_ErrorCases(t *testing.T) {
-	dispatcher := setUp()
-	defer tearDown(dispatcher)
+	distributor := setUp()
+	defer tearDown(distributor)
 
-	result, rvMap := dispatcher.ProcessEvents(generateAddNodeEvent(10))
+	result, rvMap := distributor.ProcessEvents(generateAddNodeEvent(10))
 	assert.True(t, result)
 	assert.NotNil(t, rvMap)
-	assert.Equal(t, 10, dispatcher.defaultNodeStore.GetTotalHostNum())
+	assert.Equal(t, 10, distributor.defaultNodeStore.GetTotalHostNum())
 
 	// not enough hosts
-	clientId, result, err := dispatcher.RegisterClient(100)
+	clientId, result, err := distributor.RegisterClient(100)
 	assert.False(t, result, "Expecting request fail due to not enough hosts")
 	assert.NotNil(t, clientId, "Expecting not nil client id")
 	assert.False(t, clientId == "", "Expecting non empty client id")
 	assert.Equal(t, types.Error_HostRequestExceedLimit, err)
 
 	// less than minimal request host number
-	clientId, result, err = dispatcher.RegisterClient(MinimalRequestHostNum - 1)
+	clientId, result, err = distributor.RegisterClient(MinimalRequestHostNum - 1)
 	assert.False(t, result, "Expecting request fail due to less than minimal host request")
 	assert.NotNil(t, clientId, "Expecting not nil client id")
 	assert.False(t, clientId == "", "Expecting non empty client id")
@@ -187,18 +187,18 @@ func TestRegisterClient_ErrorCases(t *testing.T) {
 }
 
 func TestRegisterClient_WithinLimit(t *testing.T) {
-	dispatcher := setUp()
-	defer tearDown(dispatcher)
+	distributor := setUp()
+	defer tearDown(distributor)
 
-	result, rvMap := dispatcher.ProcessEvents(generateAddNodeEvent(10000))
+	result, rvMap := distributor.ProcessEvents(generateAddNodeEvent(10000))
 	assert.True(t, result)
 	assert.NotNil(t, rvMap)
-	assert.Equal(t, 10000, dispatcher.defaultNodeStore.GetTotalHostNum())
+	assert.Equal(t, 10000, distributor.defaultNodeStore.GetTotalHostNum())
 
 	requestedHostNum := 500
 	for i := 0; i < 10; i++ {
 		start := time.Now()
-		clientId, result, err := dispatcher.RegisterClient(requestedHostNum)
+		clientId, result, err := distributor.RegisterClient(requestedHostNum)
 		duration := time.Since(start)
 
 		assert.True(t, result, "Expecting register client successfully")
@@ -207,7 +207,7 @@ func TestRegisterClient_WithinLimit(t *testing.T) {
 		assert.Nil(t, err, "Expecting nil error")
 
 		// check virtual node assignment
-		virtualStoresAssignedToClient, isOK := dispatcher.clientToStores[clientId]
+		virtualStoresAssignedToClient, isOK := distributor.clientToStores[clientId]
 		assert.True(t, isOK, "Expecting get virtual stores assigned to client %s", clientId)
 		assert.True(t, len(virtualStoresAssignedToClient) > 0, "Expecting get non empty virtual stores assigned to client %s", clientId)
 		hostCount := 0
@@ -224,33 +224,33 @@ func TestRegisterClient_WithinLimit(t *testing.T) {
 }
 
 func TestRegistrationWorkflow(t *testing.T) {
-	dispatcher := setUp()
-	defer tearDown(dispatcher)
+	distributor := setUp()
+	defer tearDown(distributor)
 
 	// initialize node store with 10K nodes
 	eventsAdd := generateAddNodeEvent(10000)
-	result, rvMap := dispatcher.ProcessEvents(eventsAdd)
+	result, rvMap := distributor.ProcessEvents(eventsAdd)
 	assert.True(t, result)
 	assert.NotNil(t, rvMap)
-	assert.Equal(t, 10000, dispatcher.defaultNodeStore.GetTotalHostNum())
+	assert.Equal(t, 10000, distributor.defaultNodeStore.GetTotalHostNum())
 
 	// update nodes
 	eventsUpdate := generateUpdateNodeEvents(eventsAdd)
-	result, rvMap = dispatcher.ProcessEvents(eventsUpdate)
+	result, rvMap = distributor.ProcessEvents(eventsUpdate)
 	assert.True(t, result)
 	assert.NotNil(t, rvMap)
-	assert.Equal(t, 10000, dispatcher.defaultNodeStore.GetTotalHostNum())
+	assert.Equal(t, 10000, distributor.defaultNodeStore.GetTotalHostNum())
 
 	// register client
 	requestedHostNum := 500
-	clientId, result, err := dispatcher.RegisterClient(requestedHostNum)
+	clientId, result, err := distributor.RegisterClient(requestedHostNum)
 	assert.True(t, result, "Expecting register client successfully")
 	assert.NotNil(t, clientId, "Expecting not nil client id")
 	assert.False(t, clientId == "", "Expecting non empty client id")
 	assert.Nil(t, err, "Expecting nil error")
 
 	// client list nodes
-	nodes, latestRVs, err := dispatcher.ListNodesForClient(clientId)
+	nodes, latestRVs, err := distributor.ListNodesForClient(clientId)
 	assert.Nil(t, err)
 	assert.NotNil(t, latestRVs)
 	assert.True(t, len(nodes) >= 500)
@@ -271,7 +271,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	// update nodes
 	oldNodeRV := nodes[0].GetResourceVersion()
 	updateNodeEvents := generatedUpdateNodeEventsFromNodeList(nodes)
-	result2, rvMap2 := dispatcher.ProcessEvents(updateNodeEvents)
+	result2, rvMap2 := distributor.ProcessEvents(updateNodeEvents)
 	assert.True(t, result2, "Expecting update nodes successfully")
 	loc := nodes[0].GetLocation()
 	assert.Equal(t, uint64(rvToGenerate), rvMap2[*loc])
@@ -280,7 +280,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	// client watch node update
 	watchCh := make(chan *event.NodeEvent)
 	stopCh := make(chan struct{})
-	err = dispatcher.Watch(clientId, latestRVs, watchCh, stopCh)
+	err = distributor.Watch(clientId, latestRVs, watchCh, stopCh)
 	if err != nil {
 		assert.Fail(t, "Encountered error while building watch connection.", "Encountered error while building watch connection. Error %v", err)
 		return

@@ -1,4 +1,4 @@
-package dispatcher
+package distributor
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-type ResourceDispatcher struct {
+type ResourceDistributor struct {
 	defaultNodeStore *storage.NodeStore
 
 	// clientId to node event queue
@@ -25,7 +25,7 @@ type ResourceDispatcher struct {
 	allocateLock   sync.Mutex
 }
 
-var _dispatcher *ResourceDispatcher = nil
+var _distributor *ResourceDistributor = nil
 var once sync.Once
 
 const (
@@ -33,15 +33,15 @@ const (
 	VirutalStoreNumPerResourcePartition = 200 // 10K per resource partition, 50 hosts per virtual node store
 )
 
-func GetResourceDispatcher() *ResourceDispatcher {
+func GetResourceDistributor() *ResourceDistributor {
 	once.Do(func() {
-		_dispatcher = &ResourceDispatcher{
+		_distributor = &ResourceDistributor{
 			defaultNodeStore:  createNodeStore(),
 			nodeEventQueueMap: make(map[string]*cache.NodeEventQueue),
 			clientToStores:    make(map[string][]*storage.VirtualNodeStore),
 		}
 	})
-	return _dispatcher
+	return _distributor
 }
 
 // TODO - get virtual node number, region num, partition num from external
@@ -49,7 +49,7 @@ func createNodeStore() *storage.NodeStore {
 	return storage.NewNodeStore(VirutalStoreNumPerResourcePartition, location.GetRegionNum(), location.GetRPNum())
 }
 
-func (dis *ResourceDispatcher) RegisterClient(requestedHostNum int) (string, bool, error) {
+func (dis *ResourceDistributor) RegisterClient(requestedHostNum int) (string, bool, error) {
 	clientId := uuid.New().String()
 	result, err := dis.allocateNodesToClient(clientId, requestedHostNum)
 	if err != nil {
@@ -59,7 +59,7 @@ func (dis *ResourceDispatcher) RegisterClient(requestedHostNum int) (string, boo
 	return clientId, result, err
 }
 
-func (dis *ResourceDispatcher) allocateNodesToClient(clientId string, requestedHostNum int) (bool, error) {
+func (dis *ResourceDistributor) allocateNodesToClient(clientId string, requestedHostNum int) (bool, error) {
 	dis.allocateLock.Lock()
 	defer dis.allocateLock.Unlock()
 	if requestedHostNum <= MinimalRequestHostNum {
@@ -122,7 +122,7 @@ func (dis *ResourceDispatcher) allocateNodesToClient(clientId string, requestedH
 	return true, nil
 }
 
-func (dis *ResourceDispatcher) addBookmarkEvent(stores []*storage.VirtualNodeStore, eventQueue *cache.NodeEventQueue) {
+func (dis *ResourceDistributor) addBookmarkEvent(stores []*storage.VirtualNodeStore, eventQueue *cache.NodeEventQueue) {
 	locations := make(map[location.Location]bool)
 
 	for _, store := range stores {
@@ -139,7 +139,7 @@ func (dis *ResourceDispatcher) addBookmarkEvent(stores []*storage.VirtualNodeSto
 
 // TODO: sort virtual node stores based on ordering criteria
 // Do not sort by host number since this can lead to over assignment more and more
-func (dis *ResourceDispatcher) getSortedVirtualStores(stores map[*storage.VirtualNodeStore]bool) []*storage.VirtualNodeStore {
+func (dis *ResourceDistributor) getSortedVirtualStores(stores map[*storage.VirtualNodeStore]bool) []*storage.VirtualNodeStore {
 	sortedStores := make([]*storage.VirtualNodeStore, len(stores))
 	index := 0
 	for vs, isOK := range stores {
@@ -152,7 +152,7 @@ func (dis *ResourceDispatcher) getSortedVirtualStores(stores map[*storage.Virtua
 	return sortedStores
 }
 
-func (dis *ResourceDispatcher) ListNodesForClient(clientId string) ([]*types.Node, types.ResourceVersionMap, error) {
+func (dis *ResourceDistributor) ListNodesForClient(clientId string) ([]*types.Node, types.ResourceVersionMap, error) {
 	if clientId == "" {
 		return nil, nil, errors.New("Empty clientId")
 	}
@@ -201,7 +201,7 @@ func (dis *ResourceDispatcher) ListNodesForClient(clientId string) ([]*types.Nod
 	return nodes, finalRVs, nil
 }
 
-func (dis *ResourceDispatcher) Watch(clientId string, rvs types.ResourceVersionMap, watchChan chan *event.NodeEvent, stopCh chan struct{}) error {
+func (dis *ResourceDistributor) Watch(clientId string, rvs types.ResourceVersionMap, watchChan chan *event.NodeEvent, stopCh chan struct{}) error {
 	var nodeEventQueue *cache.NodeEventQueue
 	var isOK bool
 	if nodeEventQueue, isOK = dis.nodeEventQueueMap[clientId]; !isOK || nodeEventQueue == nil {
@@ -220,7 +220,7 @@ func (dis *ResourceDispatcher) Watch(clientId string, rvs types.ResourceVersionM
 	return nodeEventQueue.Watch(rvs, watchChan, stopCh)
 }
 
-func (dis *ResourceDispatcher) ProcessEvents(events []*event.NodeEvent) (bool, types.ResourceVersionMap) {
+func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, types.ResourceVersionMap) {
 	dis.eventProcessingLock.Lock()
 	defer dis.eventProcessingLock.Unlock()
 	result, rvMap := dis.defaultNodeStore.ProcessNodeEvents(events)
