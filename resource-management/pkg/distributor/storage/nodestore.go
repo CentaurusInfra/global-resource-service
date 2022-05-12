@@ -5,6 +5,7 @@ import (
 	"math"
 	"resource-management/pkg/common-lib/hash"
 	"resource-management/pkg/common-lib/types"
+	"resource-management/pkg/common-lib/types/event"
 	"resource-management/pkg/distributor/cache"
 	"sync"
 )
@@ -206,7 +207,7 @@ func (ns *NodeStore) generateVirtualNodeStores(vNodeNumPerRP int) {
 	(*ns.vNodeStores)[ns.virtualNodeNum-1].upperbound = types.RingRange
 }
 
-func (ns *NodeStore) CreateNode(nodeEvent *types.NodeEvent) {
+func (ns *NodeStore) CreateNode(nodeEvent *event.NodeEvent) {
 	hashValue, ringId := ns.getNodeHash(nodeEvent.GetNode())
 	isNewNode := ns.addNodeToRing(hashValue, ringId, nodeEvent)
 	if !isNewNode {
@@ -214,16 +215,16 @@ func (ns *NodeStore) CreateNode(nodeEvent *types.NodeEvent) {
 	}
 }
 
-func (ns *NodeStore) UpdateNode(nodeEvent *types.NodeEvent) {
+func (ns *NodeStore) UpdateNode(nodeEvent *event.NodeEvent) {
 	hashValue, ringId := ns.getNodeHash(nodeEvent.GetNode())
 	ns.updateNodeInRing(hashValue, ringId, nodeEvent)
 }
 
 // TODO
-func (ns NodeStore) DeleteNode(nodeEvent types.NodeEvent) {
+func (ns NodeStore) DeleteNode(nodeEvent event.NodeEvent) {
 }
 
-func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*types.NodeEvent) (bool, types.ResourceVersionMap) {
+func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*event.NodeEvent) (bool, types.ResourceVersionMap) {
 	for _, e := range nodeEvents {
 		ns.processNodeEvent(e)
 	}
@@ -234,11 +235,11 @@ func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*types.NodeEvent) (bool, typ
 	return true, ns.currentRVs
 }
 
-func (ns *NodeStore) processNodeEvent(nodeEvent *types.NodeEvent) bool {
-	switch nodeEvent.GetEventType() {
-	case types.Event_AddNode:
+func (ns *NodeStore) processNodeEvent(nodeEvent *event.NodeEvent) bool {
+	switch nodeEvent.Type {
+	case event.Added:
 		ns.CreateNode(nodeEvent)
-	case types.Event_UpdateNode:
+	case event.Modified:
 		ns.UpdateNode(nodeEvent)
 	default:
 		return false
@@ -280,7 +281,7 @@ func (ns *NodeStore) getNodeHash(node *types.Node) (float64, int) {
 	return lower + ringValue*(upper-lower), 0
 }
 
-func (ns *NodeStore) addNodeToRing(hashValue float64, ringId int, nodeEvent *types.NodeEvent) (isNewNode bool) {
+func (ns *NodeStore) addNodeToRing(hashValue float64, ringId int, nodeEvent *event.NodeEvent) (isNewNode bool) {
 	virtualNodeIndex := int(math.Floor(hashValue / ns.granularOfRing))
 	node := nodeEvent.GetNode()
 	vNodeStore := (*ns.vNodeStores)[virtualNodeIndex]
@@ -309,7 +310,7 @@ func (ns *NodeStore) addNodeToRing(hashValue float64, ringId int, nodeEvent *typ
 	return true
 }
 
-func (ns *NodeStore) updateNodeInRing(hashValue float64, ringId int, nodeEvent *types.NodeEvent) {
+func (ns *NodeStore) updateNodeInRing(hashValue float64, ringId int, nodeEvent *event.NodeEvent) {
 	virtualNodeIndex := int(math.Floor(hashValue / ns.granularOfRing))
 	node := nodeEvent.GetNode()
 	vNodeStore := (*ns.vNodeStores)[virtualNodeIndex]

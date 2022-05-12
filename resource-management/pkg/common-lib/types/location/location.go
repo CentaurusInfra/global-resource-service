@@ -21,6 +21,9 @@ type arc struct {
 	upper float64
 }
 
+// Region defines the possible region location of a given node
+// Defined and doced by region admin
+
 const (
 	// Regions
 	Beijing   = "Beijing"

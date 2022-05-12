@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"resource-management/pkg/common-lib/types"
+	"resource-management/pkg/common-lib/types/event"
 	"resource-management/pkg/distributor/cache"
 	"resource-management/pkg/distributor/storage"
 	"strconv"
@@ -129,7 +130,7 @@ func (dis *ResourceDispatcher) addBookmarkEvent(stores []*storage.VirtualNodeSto
 			locations[loc] = true
 
 			node := types.NewNode("", strconv.FormatUint(store.GetOneNode().GetResourceVersion(), 10), "", &loc)
-			bookmarkEvent := types.NewNodeEvent(node, types.Event_Bookmark)
+			bookmarkEvent := event.NewNodeEvent(node, event.Bookmark)
 			eventQueue.EnqueueEvent(bookmarkEvent)
 		}
 	}
@@ -199,7 +200,7 @@ func (dis *ResourceDispatcher) ListNodesForClient(clientId string) ([]*types.Nod
 	return nodes, finalRVs, nil
 }
 
-func (dis *ResourceDispatcher) Watch(clientId string, rvs types.ResourceVersionMap, watchChan chan *types.NodeEvent, stopCh chan struct{}) error {
+func (dis *ResourceDispatcher) Watch(clientId string, rvs types.ResourceVersionMap, watchChan chan *event.NodeEvent, stopCh chan struct{}) error {
 	var nodeEventQueue *cache.NodeEventQueue
 	var isOK bool
 	if nodeEventQueue, isOK = dis.nodeEventQueueMap[clientId]; !isOK || nodeEventQueue == nil {
@@ -218,7 +219,7 @@ func (dis *ResourceDispatcher) Watch(clientId string, rvs types.ResourceVersionM
 	return nodeEventQueue.Watch(rvs, watchChan, stopCh)
 }
 
-func (dis *ResourceDispatcher) ProcessEvents(events []*types.NodeEvent) (bool, types.ResourceVersionMap) {
+func (dis *ResourceDispatcher) ProcessEvents(events []*event.NodeEvent) (bool, types.ResourceVersionMap) {
 	dis.eventProcessingLock.Lock()
 	defer dis.eventProcessingLock.Unlock()
 	result, rvMap := dis.defaultNodeStore.ProcessNodeEvents(events)

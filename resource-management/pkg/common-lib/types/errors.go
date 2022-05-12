@@ -7,7 +7,7 @@ const (
 	ErrMsg_HostRequestExceedCapacity  = "Requested hosts exceeds capacity"
 	ErrMsg_HostRequestLessThanMiniaml = "Requested host number less than minimal request"
 
-	ErrMsg_ClientIdExisted = "Client id existed"
+	ErrMsg_ClientIdExisted = "Client id exists"
 
 	ErrMsg_FailedToProcessBookmarkEvent = "Failed to process bookmark events"
 )

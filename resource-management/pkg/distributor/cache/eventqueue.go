@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"resource-management/pkg/common-lib/types"
+	"resource-management/pkg/common-lib/types/event"
 	"sort"
 	"sync"
 )
@@ -12,7 +13,7 @@ import (
 const LengthOfNodeEventQueue = 10000
 
 type nodeEventQueueByLoc struct {
-	circularEventQueue []*types.NodeEvent
+	circularEventQueue []*event.NodeEvent
 	// circular event queue start position and end position
 	startPos int
 	endPos   int
@@ -23,14 +24,14 @@ type nodeEventQueueByLoc struct {
 
 func newNodeQueueByLoc() *nodeEventQueueByLoc {
 	return &nodeEventQueueByLoc{
-		circularEventQueue: make([]*types.NodeEvent, LengthOfNodeEventQueue),
+		circularEventQueue: make([]*event.NodeEvent, LengthOfNodeEventQueue),
 		startPos:           0,
 		endPos:             0,
 		eqLock:             sync.RWMutex{},
 	}
 }
 
-func (qloc *nodeEventQueueByLoc) enqueueEvent(e *types.NodeEvent) {
+func (qloc *nodeEventQueueByLoc) enqueueEvent(e *event.NodeEvent) {
 	qloc.eqLock.Lock()
 	defer qloc.eqLock.Unlock()
 
@@ -43,7 +44,7 @@ func (qloc *nodeEventQueueByLoc) enqueueEvent(e *types.NodeEvent) {
 	qloc.endPos++
 }
 
-func (qloc *nodeEventQueueByLoc) dequeueEvents(startIndex int) ([]*types.NodeEvent, error) {
+func (qloc *nodeEventQueueByLoc) dequeueEvents(startIndex int) ([]*event.NodeEvent, error) {
 	qloc.eqLock.RLock()
 	defer qloc.eqLock.RUnlock()
 
@@ -52,7 +53,7 @@ func (qloc *nodeEventQueueByLoc) dequeueEvents(startIndex int) ([]*types.NodeEve
 	}
 
 	length := qloc.endPos - qloc.startPos
-	result := make([]*types.NodeEvent, length)
+	result := make([]*event.NodeEvent, length)
 	for i := 0; i < length; i++ {
 		result[i] = qloc.circularEventQueue[(startIndex+i)%LengthOfNodeEventQueue]
 	}
@@ -87,7 +88,7 @@ func (qloc *nodeEventQueueByLoc) getEventIndexSinceResourceVersion(resourceVersi
 type NodeEventQueue struct {
 	// corresponding client id
 	clientId  string
-	watchChan chan *types.NodeEvent
+	watchChan chan *event.NodeEvent
 
 	eventQueueByLoc map[types.Location]*nodeEventQueueByLoc
 	locationLock    sync.RWMutex
@@ -102,7 +103,7 @@ func NewNodeEventQueue(clientId string) *NodeEventQueue {
 	return queue
 }
 
-func (eq *NodeEventQueue) EnqueueEvent(e *types.NodeEvent) {
+func (eq *NodeEventQueue) EnqueueEvent(e *event.NodeEvent) {
 	if eq.watchChan != nil {
 		go func() {
 			eq.watchChan <- e
@@ -119,7 +120,7 @@ func (eq *NodeEventQueue) EnqueueEvent(e *types.NodeEvent) {
 	queueByLoc.enqueueEvent(e)
 }
 
-func (eq *NodeEventQueue) Watch(rvs types.ResourceVersionMap, clientWatchChan chan *types.NodeEvent, stopCh chan struct{}) error {
+func (eq *NodeEventQueue) Watch(rvs types.ResourceVersionMap, clientWatchChan chan *event.NodeEvent, stopCh chan struct{}) error {
 	if eq.watchChan != nil {
 		return errors.New("Currently only support one watcher per node event queue.")
 	}
@@ -130,9 +131,9 @@ func (eq *NodeEventQueue) Watch(rvs types.ResourceVersionMap, clientWatchChan ch
 		return err
 	}
 
-	eq.watchChan = make(chan *types.NodeEvent)
+	eq.watchChan = make(chan *event.NodeEvent)
 	// writing event to channel
-	go func(downstreamCh chan *types.NodeEvent, initEvents []*types.NodeEvent, stopCh chan struct{}, upstreamCh chan *types.NodeEvent) {
+	go func(downstreamCh chan *event.NodeEvent, initEvents []*event.NodeEvent, stopCh chan struct{}, upstreamCh chan *event.NodeEvent) {
 		if downstreamCh == nil {
 			return
 		}
@@ -161,7 +162,7 @@ func (eq *NodeEventQueue) Watch(rvs types.ResourceVersionMap, clientWatchChan ch
 	return nil
 }
 
-func (eq *NodeEventQueue) getAllEventsSinceResourceVersion(rvs types.ResourceVersionMap) ([]*types.NodeEvent, error) {
+func (eq *NodeEventQueue) getAllEventsSinceResourceVersion(rvs types.ResourceVersionMap) ([]*event.NodeEvent, error) {
 	locStartPostitions := make(map[types.Location]int)
 
 	for loc, rv := range rvs {
@@ -175,10 +176,10 @@ func (eq *NodeEventQueue) getAllEventsSinceResourceVersion(rvs types.ResourceVer
 		}
 	}
 
-	nodeEvents := make([]*types.NodeEvent, 0)
+	nodeEvents := make([]*event.NodeEvent, 0)
 	for loc, qByLoc := range eq.eventQueueByLoc {
 		startIndex, isOK := locStartPostitions[loc]
-		var events []*types.NodeEvent
+		var events []*event.NodeEvent
 		var err error
 		if isOK {
 			events, err = qByLoc.dequeueEvents(startIndex)

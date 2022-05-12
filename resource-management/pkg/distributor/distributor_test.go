@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"resource-management/pkg/common-lib/types"
+	"resource-management/pkg/common-lib/types/event"
 	"resource-management/pkg/distributor/cache"
 	"resource-management/pkg/distributor/storage"
 	"strconv"
@@ -69,7 +70,7 @@ func TestDispatcherInit(t *testing.T) {
 	}
 }
 
-func measureProcessEvent(t *testing.T, dis *ResourceDispatcher, eventType string, events []*types.NodeEvent, previousNodeCount int) {
+func measureProcessEvent(t *testing.T, dis *ResourceDispatcher, eventType string, events []*event.NodeEvent, previousNodeCount int) {
 	start := time.Now()
 	result, rvMap := dis.ProcessEvents(events)
 	duration := time.Since(start)
@@ -101,35 +102,35 @@ func TestAddNodes(t *testing.T) {
 	}
 }
 
-func generateAddNodeEvent(eventNum int) []*types.NodeEvent {
-	result := make([]*types.NodeEvent, eventNum)
+func generateAddNodeEvent(eventNum int) []*event.NodeEvent {
+	result := make([]*event.NodeEvent, eventNum)
 	for i := 0; i < eventNum; i++ {
 		rvToGenerate += 1
 		node := createRandomNode(rvToGenerate)
-		nodeEvent := types.NewNodeEvent(node, types.Event_AddNode)
+		nodeEvent := event.NewNodeEvent(node, event.Added)
 		result[i] = nodeEvent
 	}
 	return result
 }
 
-func generateUpdateNodeEvents(originalEvents []*types.NodeEvent) []*types.NodeEvent {
-	result := make([]*types.NodeEvent, len(originalEvents))
+func generateUpdateNodeEvents(originalEvents []*event.NodeEvent) []*event.NodeEvent {
+	result := make([]*event.NodeEvent, len(originalEvents))
 	for i := 0; i < len(originalEvents); i++ {
 		rvToGenerate += 1
 
-		newEvent := types.NewNodeEvent(types.NewNode(originalEvents[i].GetNode().GetId(), strconv.Itoa(rvToGenerate), "", originalEvents[i].GetNode().GetLocation()),
-			types.Event_UpdateNode)
+		newEvent := event.NewNodeEvent(types.NewNode(originalEvents[i].GetNode().GetId(), strconv.Itoa(rvToGenerate), "", originalEvents[i].GetNode().GetLocation()),
+			event.Modified)
 		result[i] = newEvent
 	}
 	return result
 }
 
-func generatedUpdateNodeEventsFromNodeList(nodes []*types.Node) []*types.NodeEvent {
-	result := make([]*types.NodeEvent, len(nodes))
+func generatedUpdateNodeEventsFromNodeList(nodes []*types.Node) []*event.NodeEvent {
+	result := make([]*event.NodeEvent, len(nodes))
 	for i := 0; i < len(nodes); i++ {
 		rvToGenerate += 1
-		newEvent := types.NewNodeEvent(types.NewNode(nodes[i].GetId(), strconv.Itoa(rvToGenerate), "", nodes[i].GetLocation()),
-			types.Event_UpdateNode)
+		newEvent := event.NewNodeEvent(types.NewNode(nodes[i].GetId(), strconv.Itoa(rvToGenerate), "", nodes[i].GetLocation()),
+			event.Modified)
 		result[i] = newEvent
 	}
 	return result
@@ -276,7 +277,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	assert.Equal(t, oldNodeRV, nodes[0].GetResourceVersion(), "Expecting listed nodes are snapshoted and cannot be affected by update")
 
 	// client watch node update
-	watchCh := make(chan *types.NodeEvent)
+	watchCh := make(chan *event.NodeEvent)
 	stopCh := make(chan struct{})
 	err = dispatcher.Watch(clientId, latestRVs, watchCh, stopCh)
 	if err != nil {
@@ -285,7 +286,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	}
 	watchedEventCount := 0
 	for e := range watchCh {
-		assert.Equal(t, types.Event_UpdateNode, e.GetEventType())
+		assert.Equal(t, event.Modified, e.Type)
 		assert.Equal(t, loc, e.GetNode().GetLocation())
 		watchedEventCount++
 
