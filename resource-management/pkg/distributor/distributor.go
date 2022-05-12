@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
+	"resource-management/pkg/common-lib/types/location"
 	"resource-management/pkg/distributor/cache"
 	"resource-management/pkg/distributor/storage"
 	"strconv"
@@ -45,7 +46,7 @@ func GetResourceDispatcher() *ResourceDispatcher {
 
 // TODO - get virtual node number, region num, partition num from external
 func createNodeStore() *storage.NodeStore {
-	return storage.NewNodeStore(VirutalStoreNumPerResourcePartition, types.GetRegionNum(), types.GetRPNum())
+	return storage.NewNodeStore(VirutalStoreNumPerResourcePartition, location.GetRegionNum(), location.GetRPNum())
 }
 
 func (dis *ResourceDispatcher) RegisterClient(requestedHostNum int) (string, bool, error) {
@@ -122,7 +123,7 @@ func (dis *ResourceDispatcher) allocateNodesToClient(clientId string, requestedH
 }
 
 func (dis *ResourceDispatcher) addBookmarkEvent(stores []*storage.VirtualNodeStore, eventQueue *cache.NodeEventQueue) {
-	locations := make(map[types.Location]bool)
+	locations := make(map[location.Location]bool)
 
 	for _, store := range stores {
 		loc := store.GetLocation()

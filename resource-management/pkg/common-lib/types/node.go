@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"resource-management/pkg/common-lib/types/location"
 	"strconv"
 )
 
@@ -9,10 +10,10 @@ type Node struct {
 	id              string
 	resourceVersion string
 	label           string
-	loc             *Location
+	loc             *location.Location
 }
 
-func NewNode(id, rv, label string, location *Location) *Node {
+func NewNode(id, rv, label string, location *location.Location) *Node {
 	return &Node{
 		id:              id,
 		resourceVersion: rv,
@@ -34,7 +35,7 @@ func (n *Node) GetId() string {
 	return n.id
 }
 
-func (n *Node) GetLocation() *Location {
+func (n *Node) GetLocation() *location.Location {
 	return n.loc
 }
 

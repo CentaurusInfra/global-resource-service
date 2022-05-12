@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
+	"resource-management/pkg/common-lib/types/location"
 	"sort"
 	"sync"
 )
@@ -90,14 +91,14 @@ type NodeEventQueue struct {
 	clientId  string
 	watchChan chan *event.NodeEvent
 
-	eventQueueByLoc map[types.Location]*nodeEventQueueByLoc
+	eventQueueByLoc map[location.Location]*nodeEventQueueByLoc
 	locationLock    sync.RWMutex
 }
 
 func NewNodeEventQueue(clientId string) *NodeEventQueue {
 	queue := &NodeEventQueue{
 		clientId:        clientId,
-		eventQueueByLoc: make(map[types.Location]*nodeEventQueueByLoc),
+		eventQueueByLoc: make(map[location.Location]*nodeEventQueueByLoc),
 	}
 
 	return queue
@@ -163,7 +164,7 @@ func (eq *NodeEventQueue) Watch(rvs types.ResourceVersionMap, clientWatchChan ch
 }
 
 func (eq *NodeEventQueue) getAllEventsSinceResourceVersion(rvs types.ResourceVersionMap) ([]*event.NodeEvent, error) {
-	locStartPostitions := make(map[types.Location]int)
+	locStartPostitions := make(map[location.Location]int)
 
 	for loc, rv := range rvs {
 		qByLoc, isOK := eq.eventQueueByLoc[loc]

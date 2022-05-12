@@ -1,5 +1,7 @@
 package types
 
+import "resource-management/pkg/common-lib/types/location"
+
 type CompositeResourceVersion struct {
 	RegionId            string
 	ResourcePartitionId string
@@ -7,7 +9,7 @@ type CompositeResourceVersion struct {
 }
 
 // Map from (regionId, ResourcePartitionId) to resourceVersion
-type ResourceVersionMap map[Location]uint64
+type ResourceVersionMap map[location.Location]uint64
 
 func (rvs *ResourceVersionMap) Copy() ResourceVersionMap {
 	dupRVs := make(ResourceVersionMap, len(*rvs))

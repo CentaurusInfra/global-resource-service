@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
+	"resource-management/pkg/common-lib/types/location"
 	"resource-management/pkg/distributor/cache"
 	"resource-management/pkg/distributor/storage"
 	"strconv"
@@ -19,7 +20,7 @@ var rvToGenerate = 0
 
 var singleTestLock = sync.Mutex{}
 
-var defaultLocBeijing_RP1 = types.NewLocation(types.Beijing, fmt.Sprintf("%s_%s", types.Beijing, types.ResourcePartition1))
+var defaultLocBeijing_RP1 = location.NewLocation(location.Beijing, location.ResourcePartition1)
 
 func setUp() *ResourceDispatcher {
 	singleTestLock.Lock()
@@ -59,7 +60,7 @@ func TestDispatcherInit(t *testing.T) {
 		assert.NotEqual(t, lowerBound, upperBound, "Expecting lower bound not equal to upper bound for virtual store %d. Got hash range (%f, %f]", i, lowerBound, upperBound)
 		lower = upperBound
 		if i == len(*defaultNodeStores)-1 {
-			assert.Equal(t, types.RingRange, upperBound, "Expecting last virtual store upper bound equals %f but got %f", types.RingRange, upperBound)
+			assert.Equal(t, location.RingRange, upperBound, "Expecting last virtual store upper bound equals %f but got %f", location.RingRange, upperBound)
 		}
 
 		loc := store.GetLocation()

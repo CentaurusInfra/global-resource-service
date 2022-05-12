@@ -6,6 +6,7 @@ import (
 	"resource-management/pkg/common-lib/hash"
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
+	"resource-management/pkg/common-lib/types/location"
 	"resource-management/pkg/distributor/cache"
 	"sync"
 )
@@ -21,7 +22,7 @@ type VirtualNodeStore struct {
 	upperbound float64
 
 	// one virtual store can only have nodes from one resource partition
-	location types.Location
+	location location.Location
 
 	clientId   string
 	eventQueue *cache.NodeEventQueue
@@ -33,7 +34,7 @@ func (vs *VirtualNodeStore) GetHostNum() int {
 	return len(vs.nodeByHash)
 }
 
-func (vs *VirtualNodeStore) GetLocation() types.Location {
+func (vs *VirtualNodeStore) GetLocation() location.Location {
 	return vs.location
 }
 
@@ -130,7 +131,7 @@ func NewNodeStore(vNodeNumPerRP int, regionNum int, partitionMaxNum int) *NodeSt
 	ns := &NodeStore{
 		virtualNodeNum:  totalVirtualNodeNum,
 		vNodeStores:     &virtualNodeStores,
-		granularOfRing:  types.RingRange / (float64(totalVirtualNodeNum)),
+		granularOfRing:  location.RingRange / (float64(totalVirtualNodeNum)),
 		regionNum:       regionNum,
 		partitionMaxNum: partitionMaxNum,
 		resourceSlots:   regionNum * partitionMaxNum,
@@ -179,11 +180,11 @@ func (ns *NodeStore) generateVirtualNodeStores(vNodeNumPerRP int) {
 
 	vNodeIndex := 0
 	for k := 0; k < ns.regionNum; k++ {
-		regionName := types.GetRegion(k)
-		rpsInRegion := types.GetRPsForRegion(regionName)
+		region := location.Regions[k]
+		rpsInRegion := location.GetRPsForRegion(region)
 
 		for m := 0; m < ns.partitionMaxNum; m++ {
-			loc := types.NewLocation(regionName, rpsInRegion[m])
+			loc := location.NewLocation(region, rpsInRegion[m])
 			lowerBound, upperBound := loc.GetArcRangeFromLocation()
 
 			for i := 0; i < vNodeNumPerRP; i++ {
@@ -204,7 +205,7 @@ func (ns *NodeStore) generateVirtualNodeStores(vNodeNumPerRP int) {
 		}
 	}
 
-	(*ns.vNodeStores)[ns.virtualNodeNum-1].upperbound = types.RingRange
+	(*ns.vNodeStores)[ns.virtualNodeNum-1].upperbound = location.RingRange
 }
 
 func (ns *NodeStore) CreateNode(nodeEvent *event.NodeEvent) {
