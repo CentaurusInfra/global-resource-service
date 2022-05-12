@@ -221,6 +221,11 @@ func TestRegisterClient_WithinLimit(t *testing.T) {
 		}
 		fmt.Printf("Total %d hosts are assigned to client %s\nTook %v to register the client.\n", hostCount, clientId, duration)
 		assert.True(t, hostCount >= requestedHostNum, "Assigned host number %d is less than requested %d", hostCount, requestedHostNum)
+
+		// check nodes number with list nodes
+		nodes, _, err := distributor.ListNodesForClient(clientId)
+		assert.Nil(t, err, "List nodes by client id should be successful")
+		assert.Equal(t, hostCount, len(nodes), "Node count from virtual store should be same as list nodes")
 	}
 }
 
@@ -255,7 +260,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, latestRVs)
 	assert.True(t, len(nodes) >= 500)
-	fmt.Printf("Latest rvs: %v\n", latestRVs)
+	fmt.Printf("Latest rvs: %v. Total hosts: %d\n", latestRVs, len(nodes))
 	// check each node event
 	nodeIds := make(map[string]bool)
 	for _, node := range nodes {
