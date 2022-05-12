@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// TODO - add more fields for minimal node record
 type Node struct {
 	id              string
 	resourceVersion string
