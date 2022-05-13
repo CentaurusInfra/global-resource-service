@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"strconv"
+	"sync"
+	"testing"
+	"time"
+
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
 	"resource-management/pkg/common-lib/types/location"
 	"resource-management/pkg/distributor/cache"
 	"resource-management/pkg/distributor/storage"
-	"strconv"
-	"sync"
-	"testing"
-	"time"
 )
 
 var existedNodeId = make(map[uuid.UUID]bool)

@@ -4,13 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"strconv"
+	"sync"
+
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
 	"resource-management/pkg/common-lib/types/location"
 	"resource-management/pkg/distributor/cache"
 	"resource-management/pkg/distributor/storage"
-	"strconv"
-	"sync"
 )
 
 type ResourceDistributor struct {

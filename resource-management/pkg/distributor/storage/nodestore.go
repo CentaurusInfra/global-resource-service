@@ -3,12 +3,13 @@ package storage
 import (
 	"fmt"
 	"math"
+	"sync"
+
 	"resource-management/pkg/common-lib/hash"
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
 	"resource-management/pkg/common-lib/types/location"
 	"resource-management/pkg/distributor/cache"
-	"sync"
 )
 
 const (

@@ -2,8 +2,9 @@ package types
 
 import (
 	"fmt"
-	"resource-management/pkg/common-lib/types/location"
 	"strconv"
+
+	"resource-management/pkg/common-lib/types/location"
 )
 
 // TODO - add more fields for minimal node record

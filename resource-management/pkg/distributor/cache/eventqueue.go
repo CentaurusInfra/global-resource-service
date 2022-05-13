@@ -3,11 +3,12 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"sort"
+	"sync"
+
 	"resource-management/pkg/common-lib/types"
 	"resource-management/pkg/common-lib/types/event"
 	"resource-management/pkg/common-lib/types/location"
-	"sort"
-	"sync"
 )
 
 // TODO - read from config
