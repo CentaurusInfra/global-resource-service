@@ -1,14 +1,21 @@
 package types
 
+// for now, simply define those as string
+type RegionName string
+type ResourcePartitionName string
+type DataCenterName string
+type AvailabilityZoneName string
+type FaultDomainName string
+
 type NodeGeoInfo struct {
 	// Region and RsourcePartition are required
-	Region            string
-	ResourcePartition string
+	Region            RegionName
+	ResourcePartition ResourcePartitionName
 
 	// Optional fields for fine-tuned resource management and application placements
-	DataCenter       string
-	AvailabilityZone string
-	FaultDomain      string
+	DataCenter       DataCenterName
+	AvailabilityZone AvailabilityZoneName
+	FaultDomain      FaultDomainName
 }
 
 type NodeTaints struct {
@@ -19,7 +26,8 @@ type NodeTaints struct {
 	NoExecute bool
 }
 
-type NodeSpecialHardTypeInfo struct {
+// TODO: consider refine for GPU types, such as NVIDIA and AMD etc.
+type NodeSpecialHardWareTypeInfo struct {
 	HasGpu  bool
 	HasFPGA bool
 }
@@ -36,6 +44,8 @@ type NodeResource struct {
 	ScalarResources map[ResourceName]int64
 }
 
+// TODO: from the Node definition in resource cluster, to the logicalNode struct, to the scheduler node_info structure
+//       the ResourceName need to be set and aligned
 type ResourceName string
 
 // LogicalNode is the abstraction of the node definition in the resource clusters
@@ -59,7 +69,7 @@ type LogicalNode struct {
 	Taints NodeTaints
 
 	// SpecialHardwareTypes defines if the node has special hardware such as GPU or FPGA etc
-	SpecialHardwareTypes NodeSpecialHardTypeInfo
+	SpecialHardwareTypes NodeSpecialHardWareTypeInfo
 
 	// AllocatableReesource defines the resources on the node that can be used by schedulers
 	AllocatableResource NodeResource
