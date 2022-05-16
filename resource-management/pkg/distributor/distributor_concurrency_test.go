@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"resource-management/pkg/common-lib/types"
-	"resource-management/pkg/common-lib/types/event"
-	"resource-management/pkg/common-lib/types/location"
+	"global-resource-service/resource-management/pkg/common-lib/types"
+	"global-resource-service/resource-management/pkg/common-lib/types/event"
+	"global-resource-service/resource-management/pkg/common-lib/types/location"
 )
 
 func TestSingleRPMutipleClients_Workflow(t *testing.T) {
