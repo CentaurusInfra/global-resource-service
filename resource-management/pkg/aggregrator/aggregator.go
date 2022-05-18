@@ -40,6 +40,7 @@ const (
 )
 
 // Initialize aggregator
+//
 func NewAggregator(urls []string, EventProcessor interfaces.Interface) *Aggregator {
 	return &Aggregator{
 		urls:           urls,
@@ -52,6 +53,7 @@ func NewAggregator(urls []string, EventProcessor interfaces.Interface) *Aggregat
 // TODO:
 //    Based on the speed of process events from resource distributor, dynamic descision of batch length
 //    will be made by aggregator and this batch length will be used to pull resources from resource region manager
+//
 func (a *Aggregator) Run() {
 	numberOfURLs := len(a.urls)
 
@@ -68,8 +70,11 @@ func (a *Aggregator) Run() {
 			for {
 				time.Sleep(100 * time.Millisecond)
 
-				// Call the PULL methods, composite RV is nil, the first PULL List. otherwise call the PULL Watch
-				minRecordNodeEvents, _ = a.initPullAndSubsequentPull(c, DefaultBatchLength, crv)
+				// Call the Pull methods 
+				// when composite RV is nil, the method initPull is called;
+				// otherwise ithe method subsequentPull is called.
+				// To simplify the codes, we use one method initPullOrSubsequentPull
+				minRecordNodeEvents, _ = a.initPullOrSubsequentPull(c, DefaultBatchLength, crv)
 
 				if minRecordNodeEvents != nil {
 					// Call ProcessEvents() and get the CRV from distributor as default success
@@ -91,6 +96,7 @@ func (a *Aggregator) Run() {
 }
 
 // Connect to resource region manager
+//
 func (a *Aggregator) createClient(url string) *Client {
 	return &Client{
 		BaseURL: url,
@@ -103,7 +109,8 @@ func (a *Aggregator) createClient(url string) *Client {
 // Call resource region manager's InitPull method {url}/resources/initpull when crv is nil
 // or
 // Call the resource region manager's SubsequentPull method {url}/resources/subsequentpull when crv is not nil
-func (a *Aggregator) initPullAndSubsequentPull(c *Client, batchLength int, crv types.ResourceVersionMap) ([]*event.NodeEvent, int) {
+//
+func (a *Aggregator) initPullOrSubsequentPull(c *Client, batchLength int, crv types.ResourceVersionMap) ([]*event.NodeEvent, int) {
 	var path string
 
 	if crv == nil {
@@ -139,6 +146,7 @@ func (a *Aggregator) initPullAndSubsequentPull(c *Client, batchLength int, crv t
 
 // Call resource region manager's POST method {url}/resources/crv to update the CRV
 // error indicate failed POST, CRV means Composite Resource Version
+//
 func (a *Aggregator) postCRV(c *Client, crv types.ResourceVersionMap) error {
 	path := "c.baseURL/resources/crv"
 	bytes, _ := json.Marshal(crv.Copy())
