@@ -79,8 +79,13 @@ func serverWatch(resp http.ResponseWriter, req *http.Request, clientId string) {
 	}
 
 	// start the watcher
-	dist.Watch(clientId, crvMap, watchCh, stopCh)
-
+	err = dist.Watch(clientId, crvMap, watchCh, stopCh)
+	if err != nil {
+		log.Printf("uUable to start the watch at store. Error %v", err)
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	
 	done := req.Context().Done()
 	flusher, ok := resp.(http.Flusher)
 	if !ok {
