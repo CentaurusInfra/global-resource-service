@@ -15,21 +15,27 @@ import (
 
 type Aggregator struct {
 	urls           []string
-	EventProcessor interfaces.Interface
+	EventProcessor interfaces.InterfacesOfDistributor
 }
 
-type Client struct {
+// To be client of Resource Region Manager
+// RRM: Resource Region Manager
+//
+type ClientOfRRM struct {
 	BaseURL    string
 	HTTPClient *http.Client
 }
 
-type Response struct {
+// RRM: Resource Region Manager
+//
+type ResponseFromRRM struct {
 	MinRecordNodeEvents []*event.NodeEvent
 	RvMap               types.ResourceVersionMap
 	Length              int
 }
 
 // RRM: Resource Region Manager
+//
 type PullDataFromRRM struct {
 	BatchLength int
 	CRV         types.ResourceVersionMap
@@ -41,7 +47,7 @@ const (
 
 // Initialize aggregator
 //
-func NewAggregator(urls []string, EventProcessor interfaces.Interface) *Aggregator {
+func NewAggregator(urls []string, EventProcessor interfaces.InterfacesOfDistributor) *Aggregator {
 	return &Aggregator{
 		urls:           urls,
 		EventProcessor: EventProcessor,
@@ -70,10 +76,10 @@ func (a *Aggregator) Run() {
 			for {
 				time.Sleep(100 * time.Millisecond)
 
-				// Call the Pull methods 
+				// Call the Pull methods
 				// when composite RV is nil, the method initPull is called;
-				// otherwise ithe method subsequentPull is called.
-				// To simplify the codes, we use one method initPullOrSubsequentPull
+				// otherwise the method subsequentPull is called.
+				// To simplify the codes, we use one method initPullOrSubsequentPull instead
 				minRecordNodeEvents, _ = a.initPullOrSubsequentPull(c, DefaultBatchLength, crv)
 
 				if minRecordNodeEvents != nil {
@@ -97,8 +103,8 @@ func (a *Aggregator) Run() {
 
 // Connect to resource region manager
 //
-func (a *Aggregator) createClient(url string) *Client {
-	return &Client{
+func (a *Aggregator) createClient(url string) *ClientOfRRM {
+	return &ClientOfRRM{
 		BaseURL: url,
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
@@ -110,7 +116,7 @@ func (a *Aggregator) createClient(url string) *Client {
 // or
 // Call the resource region manager's SubsequentPull method {url}/resources/subsequentpull when crv is not nil
 //
-func (a *Aggregator) initPullOrSubsequentPull(c *Client, batchLength int, crv types.ResourceVersionMap) ([]*event.NodeEvent, int) {
+func (a *Aggregator) initPullOrSubsequentPull(c *ClientOfRRM, batchLength int, crv types.ResourceVersionMap) ([]*event.NodeEvent, int) {
 	var path string
 
 	if crv == nil {
@@ -138,8 +144,11 @@ func (a *Aggregator) initPullOrSubsequentPull(c *Client, batchLength int, crv ty
 		fmt.Print(err.Error())
 	}
 
-	var ResponseObject Response
-	json.Unmarshal(bodyBytes, &ResponseObject)
+	var ResponseObject ResponseFromRRM
+	err = json.Unmarshal(bodyBytes, &ResponseObject)
+	if err != nil {
+		fmt.Println("Error from JSON Unmarshal:", err)
+	}
 
 	return ResponseObject.MinRecordNodeEvents, ResponseObject.Length
 }
@@ -147,7 +156,7 @@ func (a *Aggregator) initPullOrSubsequentPull(c *Client, batchLength int, crv ty
 // Call resource region manager's POST method {url}/resources/crv to update the CRV
 // error indicate failed POST, CRV means Composite Resource Version
 //
-func (a *Aggregator) postCRV(c *Client, crv types.ResourceVersionMap) error {
+func (a *Aggregator) postCRV(c *ClientOfRRM, crv types.ResourceVersionMap) error {
 	path := "c.baseURL/resources/crv"
 	bytes, _ := json.Marshal(crv.Copy())
 	req, err := http.NewRequest(http.MethodPost, path, strings.NewReader((string(bytes))))
