@@ -96,6 +96,14 @@ func measureProcessEvent(t *testing.T, dis *ResourceDistributor, eventType strin
 	assert.Equal(t, len(events)+previousNodeCount, hostCount, "Expected host number %d does not match actual host number %d", len(events), hostCount)
 }
 
+/*
+Processing 10 AddNode events took 137.781µs.
+Processing 100 AddNode events took 304.811µs.
+Processing 1000 AddNode events took 2.31354ms.
+Processing 10000 AddNode events took 20.534667ms.
+Processing 100000 AddNode events took 226.214745ms.
+Processing 1000000 AddNode events took 2.774046866s.
+*/
 func TestAddNodes(t *testing.T) {
 	distributor := setUp()
 	defer tearDown()
