@@ -121,7 +121,7 @@ type NodeStore struct {
 	hostNumLock  sync.RWMutex
 
 	// Latest resource version map
-	currentRVs types.ResourceVersionMap
+	currentRVs [][]uint64
 	rvLock     sync.RWMutex
 }
 
@@ -131,6 +131,11 @@ func NewNodeStore(vNodeNumPerRP int, regionNum int, partitionMaxNum int) *NodeSt
 	totalVirtualNodeNum := vNodeNumPerRP * regionNum * partitionMaxNum
 	virtualNodeStores := make([]*VirtualNodeStore, totalVirtualNodeNum)
 
+	rvArray := make([][]uint64, regionNum)
+	for i := 0; i < regionNum; i++ {
+		rvArray[i] = make([]uint64, partitionMaxNum)
+	}
+
 	ns := &NodeStore{
 		virtualNodeNum:  totalVirtualNodeNum,
 		vNodeStores:     &virtualNodeStores,
@@ -138,7 +143,7 @@ func NewNodeStore(vNodeNumPerRP int, regionNum int, partitionMaxNum int) *NodeSt
 		regionNum:       regionNum,
 		partitionMaxNum: partitionMaxNum,
 		resourceSlots:   regionNum * partitionMaxNum,
-		currentRVs:      make(types.ResourceVersionMap),
+		currentRVs:      rvArray,
 		totalHostNum:    0,
 	}
 
@@ -150,7 +155,15 @@ func NewNodeStore(vNodeNumPerRP int, regionNum int, partitionMaxNum int) *NodeSt
 func (ns *NodeStore) GetCurrentResourceVersions() types.ResourceVersionMap {
 	ns.rvLock.RLock()
 	defer ns.rvLock.RUnlock()
-	return ns.currentRVs.Copy()
+	rvMap := make(types.ResourceVersionMap)
+	for i := 0; i < ns.regionNum; i++ {
+		for j := 0; j < ns.partitionMaxNum; j++ {
+			if ns.currentRVs[i][j] > 0 {
+				rvMap[*location.NewLocation(location.Regions[i], location.ResourcePartitions[j])] = ns.currentRVs[i][j]
+			}
+		}
+	}
+	return rvMap
 }
 
 func (ns *NodeStore) GetTotalHostNum() int {
@@ -239,7 +252,7 @@ func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*event.NodeEvent) (bool, typ
 	// persist disk
 
 	// TODO - make a copy of currentRVs in case modification happen unexpectedly
-	return true, ns.currentRVs
+	return true, ns.GetCurrentResourceVersions()
 }
 
 func (ns *NodeStore) processNodeEvent(nodeEvent *event.NodeEvent) bool {
@@ -254,15 +267,13 @@ func (ns *NodeStore) processNodeEvent(nodeEvent *event.NodeEvent) bool {
 
 	// Update ResourceVersionMap
 	newRV := nodeEvent.GetNode().GetResourceVersion()
+	region := nodeEvent.GetNode().GetLocation().GetRegion()
+	resourcePartition := nodeEvent.GetNode().GetLocation().GetResourcePartition()
 	ns.rvLock.Lock()
-	if lastRV, isOK := ns.currentRVs[*nodeEvent.GetNode().GetLocation()]; isOK {
-		if lastRV < newRV {
-			ns.currentRVs[*nodeEvent.GetNode().GetLocation()] = newRV
-		}
-	} else {
-		ns.currentRVs[*nodeEvent.GetNode().GetLocation()] = newRV
-	}
 	ns.rvLock.Unlock()
+	if ns.currentRVs[region][resourcePartition] < newRV {
+		ns.currentRVs[region][resourcePartition] = newRV
+	}
 
 	return true
 }

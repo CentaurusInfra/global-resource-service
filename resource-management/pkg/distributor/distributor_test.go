@@ -72,7 +72,7 @@ func TestDistributorInit(t *testing.T) {
 		loc := store.GetLocation()
 		assert.NotNil(t, loc, "Location of store should not be empty")
 		if defaultLocBeijing_RP1.Equal(loc) {
-			fmt.Printf("virtual node store %d, location %s, hash range (%f, %f]\n", i, store.GetLocation(), lowerBound, upperBound)
+			fmt.Printf("virtual node store %d, location %v, hash range (%f, %f]\n", i, store.GetLocation(), lowerBound, upperBound)
 		}
 	}
 }

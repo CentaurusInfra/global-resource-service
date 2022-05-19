@@ -224,6 +224,5 @@ func (dis *ResourceDistributor) Watch(clientId string, rvs types.ResourceVersion
 
 func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, types.ResourceVersionMap) {
 	result, rvMap := dis.defaultNodeStore.ProcessNodeEvents(events)
-
 	return result, rvMap
 }
