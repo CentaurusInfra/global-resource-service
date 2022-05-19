@@ -270,10 +270,10 @@ func (ns *NodeStore) processNodeEvent(nodeEvent *event.NodeEvent) bool {
 	region := nodeEvent.GetNode().GetLocation().GetRegion()
 	resourcePartition := nodeEvent.GetNode().GetLocation().GetResourcePartition()
 	ns.rvLock.Lock()
-	ns.rvLock.Unlock()
 	if ns.currentRVs[region][resourcePartition] < newRV {
 		ns.currentRVs[region][resourcePartition] = newRV
 	}
+	ns.rvLock.Unlock()
 
 	return true
 }

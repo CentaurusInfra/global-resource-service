@@ -114,12 +114,12 @@ Processing 100000 AddNode events took 91.526917ms.
 Processing 1000000 AddNode events took 1.152776809s.
 
 RV using array - NO lock, has lock on rv check
-Processing 10 AddNode events took 33.901µs.
-Processing 100 AddNode events took 81.025µs.
-Processing 1000 AddNode events took 648.007µs.
-Processing 10000 AddNode events took 5.527065ms.
-Processing 100000 AddNode events took 67.879016ms.
-Processing 1000000 AddNode events took 909.492123ms.
+Processing 10 AddNode events took 34.957µs.
+Processing 100 AddNode events took 63.625µs.
+Processing 1000 AddNode events took 667.154µs.
+Processing 10000 AddNode events took 5.899166ms.
+Processing 100000 AddNode events took 77.327117ms.
+Processing 1000000 AddNode events took 831.232514ms.
 */
 func TestAddNodes(t *testing.T) {
 	distributor := setUp()
