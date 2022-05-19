@@ -97,12 +97,24 @@ func measureProcessEvent(t *testing.T, dis *ResourceDistributor, eventType strin
 }
 
 /*
-Processing 10 AddNode events took 137.781µs.
-Processing 100 AddNode events took 304.811µs.
-Processing 1000 AddNode events took 2.31354ms.
-Processing 10000 AddNode events took 20.534667ms.
-Processing 100000 AddNode events took 226.214745ms.
-Processing 1000000 AddNode events took 2.774046866s.
+RV using map - has lock:
+Processing 10 AddNode events took 50.668µs.
+Processing 100 AddNode events took 84.67µs.
+Processing 1000 AddNode events took 838.216µs.
+Processing 10000 AddNode events took 8.393787ms.
+Processing 100000 AddNode events took 102.707352ms.
+Processing 1000000 AddNode events took 1.184265289s.
+
+RV using map - NO lock:
+Processing 10 AddNode events took 35.453µs.
+Processing 100 AddNode events took 80.803µs.
+Processing 1000 AddNode events took 817.802µs.
+Processing 10000 AddNode events took 7.555092ms.
+Processing 100000 AddNode events took 91.526917ms.
+Processing 1000000 AddNode events took 1.152776809s.
+
+RV using array:
+
 */
 func TestAddNodes(t *testing.T) {
 	distributor := setUp()

@@ -223,8 +223,6 @@ func (dis *ResourceDistributor) Watch(clientId string, rvs types.ResourceVersion
 }
 
 func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, types.ResourceVersionMap) {
-	dis.eventProcessingLock.Lock()
-	defer dis.eventProcessingLock.Unlock()
 	result, rvMap := dis.defaultNodeStore.ProcessNodeEvents(events)
 
 	return result, rvMap
