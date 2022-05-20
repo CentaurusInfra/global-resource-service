@@ -1,10 +1,17 @@
 #!/usr/bin/bash
 #
 # This script is used to quickly install configure Redis Server 
-# on Ubuntun20.04 and MacOS(Darwin 20.6.0)
-#    Running on Ubuntu: ./hack/Redis_On_U2004_Or_MacOs.sh
+# on Ubuntun20.04/18.04/16.04 and MacOS(Darwin 20.6.0)
 #
-#    Running on MacOS:  /bin/bash ./hack/Redis_On_U2004_Or_MacOs.sh
+#    Running on Ubuntu 20.04: ./hack/redis_install.sh
+#                              Redis 7.0.0 is installed as default
+#    Running on Ubuntu 18.04: ./bin/bash ./hack/redis_install.sh
+#                              Redis 7.0.0 is installed as default
+#    Running on Ubuntu 16.04: ./bin/bash ./hack/redis_install.sh
+#                              Redis 7.0.0 is installed as default
+#
+#    Running on MacOS:  /bin/bash ./hack/redis_install.sh
+#                       Redis 7.0.0 is installed as default
 #
 # Reference: 
 #    For Ubuntu: https://redis.io/docs/getting-started/installation/install-redis-on-linux/
@@ -16,17 +23,34 @@
 export PATH=$PATH
 
 if [ `uname -s` == "Linux" ]; then
-  LinuxOS=`uname -v |awk -F'-' '{print $2}' |awk '{print $1}'`
+  LINUX_OS=`uname -v |awk -F'-' '{print $2}' |awk '{print $1}'`
 
-  if [ "$LinuxOS" == "Ubuntu" ]; then
+  if [ "$LINUX_OS" == "Ubuntu" ]; then
+    UBUNTU_VERSION_ID=`grep VERSION_ID /etc/os-release |awk -F'"' '{print $2}'`
+
     echo "1. Install Redis on Ubuntu ......"
-    curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+    REDIS_GPG_FILE=/usr/share/keyrings/redis-archive-keyring.gpg
+    if [ -f $REDIS_GPG_FILE ]; then
+      sudo rm -f $REDIS_GPG_FILE
+    fi 
+    curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o $REDIS_GPG_FILE
 
     echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
 
     sudo apt-get update
-    sudo apt-get install redis
-    
+
+    if [ "$UBUNTU_VERSION_ID" == "20.04" ]; then
+      REDIS_VERSION="6:7.0.0-1rl1~focal1"
+    elif [ "$UBUNTU_VERSION_ID" == "18.04" ]; then
+      REDIS_VERSION="6:7.0.0-1rl1~bionic1"
+    elif [ "$UBUNTU_VERSION_ID" == "16.04" ]; then
+      REDIS_VERSION="6:7.0.0-1rl1~xenial1"
+    else
+      echo "The Ubuntu $UBUNTU_VERSION_ID is not currently supported and exit"
+      exit 1
+    fi
+
+    sudo apt-get install redis=$REDIS_VERSION
     echo "End to install on Ubuntu ......"
 
     echo ""
@@ -55,7 +79,7 @@ elif [ `uname -s` == "Darwin" ]; then
   brew --version
 
   echo ""
-  brew install redis
+  brew install redis=7.0
   brew services start redis
   brew services info redis --json
 
@@ -113,6 +137,8 @@ echo ""
 echo "Sleep 5 seconds after Redis tests ..."
 sleep 5
 
+# Redis Persistence Options:
+#
 # 1.Redis Database File (RDB) persistence takes snapshots of the database at intervals corresponding to the save directives in the redis.conf file. The redis.conf file contains three default intervals. RDB persistence generates a compact file for data recovery. However, any writes since the last snapshot is lost.
 
 # 2. Append Only File (AOF) persistence appends every write operation to a log. Redis replays these transactions at startup to restore the database state. You can configure AOF persistence in the redis.conf file with the appendonly and appendfsync directives. This method is more durable and results in less data loss. Redis frequently rewrites the file so it is more concise, but AOF persistence results in larger files, and it is typically slower than the RDB approach
@@ -125,5 +151,3 @@ echo "*                                                          *"
 echo "************************************************************"
 
 exit 0
-
-
