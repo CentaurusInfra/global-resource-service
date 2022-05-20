@@ -30,8 +30,8 @@ type VirtualNodeStore struct {
 }
 
 func (vs *VirtualNodeStore) GetHostNum() int {
-	vs.mu.Lock()
-	defer vs.mu.Unlock()
+	vs.mu.RLock()
+	defer vs.mu.RUnlock()
 	return len(vs.nodeByHash)
 }
 
@@ -66,8 +66,8 @@ func (vs *VirtualNodeStore) GetRange() (float64, float64) {
 }
 
 func (vs *VirtualNodeStore) SnapShot() ([]*types.Node, types.ResourceVersionMap) {
-	vs.mu.Lock()
-	defer vs.mu.Unlock()
+	vs.mu.RLock()
+	defer vs.mu.RUnlock()
 	nodesCopy := make([]*types.Node, len(vs.nodeByHash))
 	index := 0
 	rvs := make(types.ResourceVersionMap)
@@ -302,7 +302,15 @@ func (ns *NodeStore) getNodeHash(node *types.Node) (float64, int) {
 func (ns *NodeStore) addNodeToRing(hashValue float64, ringId int, nodeEvent *event.NodeEvent) (isNewNode bool) {
 	virtualNodeIndex := int(math.Floor(hashValue / ns.granularOfRing))
 	node := nodeEvent.GetNode()
+
 	vNodeStore := (*ns.vNodeStores)[virtualNodeIndex]
+	// add event to event queue
+	// During list snapshot, eventQueue will be locked first and virtual node stores will be locked later
+	// Keep the locking sequence here to prevent deadlock
+	if vNodeStore.eventQueue != nil {
+		vNodeStore.eventQueue.EnqueueEvent(nodeEvent)
+	}
+
 	vNodeStore.mu.Lock()
 	defer vNodeStore.mu.Unlock()
 
@@ -320,18 +328,21 @@ func (ns *NodeStore) addNodeToRing(hashValue float64, ringId int, nodeEvent *eve
 	ns.totalHostNum++
 	ns.hostNumLock.Unlock()
 
-	// add event to event queue
-	if vNodeStore.eventQueue != nil {
-		vNodeStore.eventQueue.EnqueueEvent(nodeEvent)
-	}
-
 	return true
 }
 
 func (ns *NodeStore) updateNodeInRing(hashValue float64, ringId int, nodeEvent *event.NodeEvent) {
 	virtualNodeIndex := int(math.Floor(hashValue / ns.granularOfRing))
 	node := nodeEvent.GetNode()
+
 	vNodeStore := (*ns.vNodeStores)[virtualNodeIndex]
+	// add event to event queue
+	// During list snapshot, eventQueue will be locked first and virtual node stores will be locked later
+	// Keep the locking sequence here to prevent deadlock
+	if vNodeStore.eventQueue != nil {
+		vNodeStore.eventQueue.EnqueueEvent(nodeEvent)
+	}
+
 	vNodeStore.mu.Lock()
 	if oldNode, isOK := vNodeStore.nodeByHash[hashValue]; isOK {
 		// TODO - check uuid to make sure updating right node
@@ -347,11 +358,6 @@ func (ns *NodeStore) updateNodeInRing(hashValue float64, ringId int, nodeEvent *
 			// TODO - check linked list to get right
 			fmt.Printf("Updating node got same hash value (%f) but different node id: (%s and %s)", hashValue,
 				oldNode.GetId(), node.GetId())
-		}
-
-		// add event to event queue
-		if vNodeStore.eventQueue != nil {
-			vNodeStore.eventQueue.EnqueueEvent(nodeEvent)
 		}
 
 		vNodeStore.mu.Unlock()

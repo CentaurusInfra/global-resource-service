@@ -380,6 +380,14 @@ Processing 2000 AddNode events took 1.607259ms.
 Processing 20000 AddNode events took 11.793391ms.
 Processing 200000 AddNode events took 154.692465ms.
 Processing 2000000 AddNode events took 1.85247087s.
+
+RV using array, added lock for snapshot in event queue
+Processing 20 AddNode events took 46.419µs.
+Processing 200 AddNode events took 144.9µs.
+Processing 2000 AddNode events took 1.390383ms.
+Processing 20000 AddNode events took 11.794798ms.
+Processing 200000 AddNode events took 144.229808ms.
+Processing 2000000 AddNode events took 1.86103252s.
 */
 func TestProcessEvents_TwoRPs_AddNodes_Sequential(t *testing.T) {
 	distributor := setUp()
@@ -422,6 +430,14 @@ Processing 2000 AddNode events took 906.622µs.
 Processing 20000 AddNode events took 6.965772ms.
 Processing 200000 AddNode events took 106.936265ms.
 Processing 2000000 AddNode events took 1.24163592s.
+
+RV using array, added lock for snapshot in event queue
+Processing 20 AddNode events took 87.807µs.
+Processing 200 AddNode events took 177.349µs.
+Processing 2000 AddNode events took 859.874µs.
+Processing 20000 AddNode events took 6.772558ms.
+Processing 200000 AddNode events took 109.476743ms.
+Processing 2000000 AddNode events took 1.21830443s.
 */
 func TestProcessEvents_TwoRPs_Concurrent(t *testing.T) {
 	distributor := setUp()
