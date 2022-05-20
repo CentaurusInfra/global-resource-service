@@ -17,6 +17,7 @@ export PATH=$PATH
 
 if [ `uname -s` == "Linux" ]; then
   LinuxOS=`uname -v |awk -F'-' '{print $2}' |awk '{print $1}'`
+
   if [ "$LinuxOS" == "Ubuntu" ]; then
     echo "1. Install Redis on Ubuntu ......"
     curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
@@ -32,7 +33,7 @@ if [ `uname -s` == "Linux" ]; then
     echo "2. Enable and Run Redis ......"
     echo "==============================="
     REDIS_CONF_Ubuntu=/etc/redis/redis.conf
-    sudo ls -alg /etc/redis/redis.conf
+    sudo ls -alg $REDIS_CONF_Ubuntu
 
     sudo sed -i -e "s/^supervised auto$/supervised systemd/g" $REDIS_CONF_Ubuntu
     sudo egrep -v "(^#|^$)" $REDIS_CONF_Ubuntu |grep "supervised "
@@ -44,7 +45,10 @@ if [ `uname -s` == "Linux" ]; then
 
     sudo systemctl restart redis-server.service
     sudo systemctl status redis-server.service
-
+  else
+    echo ""
+    echo "This Linux OS ($LinuxOS) is currently not supported and exit"
+    exit 1
   fi
 elif [ `uname -s` == "Darwin" ]; then
   echo "1. Install and configure Redis on MacOS ......"
@@ -60,15 +64,15 @@ elif [ `uname -s` == "Darwin" ]; then
   echo ""
   echo "2. Enable and Run Redis ......"
   echo "==============================="
-  REDIS_CONF=/usr/local/etc/redis.conf
-  sed -i -e "s/^# supervised auto$/supervised systemd/g" $REDIS_CONF
-  egrep -v "(^#|^$)" $REDIS_CONF |grep "supervised "
+  REDIS_CONF_MacOS=/usr/local/etc/redis.conf
+  sed -i -e "s/^# supervised auto$/supervised systemd/g" $REDIS_CONF_MacOS
+  egrep -v "(^#|^$)" $REDIS_CONF_MacOS |grep "supervised "
 
   #
   #Configure Redis Persistence using Append Only File (AOF)
   #
-  sed -i -e "s/^appendonly no$/appendonly yes/g" $REDIS_CONF
-  egrep -v "(^#|^$)" $REDIS_CONF |egrep "(appendonly |appendfsync )"
+  sed -i -e "s/^appendonly no$/appendonly yes/g" $REDIS_CONF_MacOS
+  egrep -v "(^#|^$)" $REDIS_CONF_MacOS |egrep "(appendonly |appendfsync )"
 
   brew services stop redis
   sleep 2
