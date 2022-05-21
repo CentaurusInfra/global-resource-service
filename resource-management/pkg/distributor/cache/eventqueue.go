@@ -55,7 +55,7 @@ func (qloc *nodeEventQueueByLoc) dequeueEvents(startIndex int) ([]*event.NodeEve
 		return nil, errors.New(fmt.Sprintf("Event queue start pos %d, end pos %d, invalid start index %d", qloc.startPos, qloc.endPos, startIndex))
 	}
 
-	length := qloc.endPos - qloc.startPos
+	length := qloc.endPos - startIndex
 	result := make([]*event.NodeEvent, length)
 	for i := 0; i < length; i++ {
 		result[i] = qloc.circularEventQueue[(startIndex+i)%LengthOfNodeEventQueue].GetNodeEvent()
