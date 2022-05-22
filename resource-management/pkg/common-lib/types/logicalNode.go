@@ -6,8 +6,8 @@ import (
 )
 
 // for now, simply define those as string
-type RegionName string
-type ResourcePartitionName string
+type RegionName int
+type ResourcePartitionName int
 type DataCenterName string
 type AvailabilityZoneName string
 type FaultDomainName string

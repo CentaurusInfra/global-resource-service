@@ -22,8 +22,8 @@ var rvToGenerate = 0
 var singleTestLock = sync.Mutex{}
 
 var defaultLocBeijing_RP1 = location.NewLocation(location.Beijing, location.ResourcePartition1)
-var defaultRegionName = types.RegionName("Beijing")
-var defaultPartitionName = types.ResourcePartitionName("RP1")
+var defaultRegion = location.Beijing
+var defaultPartition = location.ResourcePartition1
 
 const defaultVirtualStoreNumPerRP = 200 // 10K per resource partition, 50 hosts per virtual node store
 
@@ -164,8 +164,8 @@ func generateUpdateNodeEvents(originalEvents []*event.NodeEvent) []*event.NodeEv
 			Id:              originalEvents[i].Node.Id,
 			ResourceVersion: strconv.Itoa(rvToGenerate),
 			GeoInfo: types.NodeGeoInfo{
-				Region:            defaultRegionName,
-				ResourcePartition: defaultPartitionName,
+				Region:            types.RegionName(defaultRegion),
+				ResourcePartition: types.ResourcePartitionName(defaultPartition),
 			},
 		}
 
@@ -193,8 +193,8 @@ func createRandomNode(rv int, loc *location.Location) *types.LogicalNode {
 		Id:              id.String(),
 		ResourceVersion: strconv.Itoa(rv),
 		GeoInfo: types.NodeGeoInfo{
-			Region:            types.RegionName(loc.GetRegion().String()),
-			ResourcePartition: types.ResourcePartitionName(loc.GetResourcePartition().String()),
+			Region:            types.RegionName(loc.GetRegion()),
+			ResourcePartition: types.ResourcePartitionName(loc.GetResourcePartition()),
 		},
 	}
 }
@@ -320,7 +320,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	// check each node event
 	nodeIds := make(map[string]bool)
 	for _, node := range nodes {
-		nodeLoc := location.NewLocationFromName(string(node.GeoInfo.Region), string(node.GeoInfo.ResourcePartition))
+		nodeLoc := location.NewLocation(location.Region(node.GeoInfo.Region), location.ResourcePartition(node.GeoInfo.ResourcePartition))
 		assert.NotNil(t, nodeLoc)
 		assert.True(t, latestRVs[*nodeLoc] >= node.GetResourceVersionInt64())
 		if _, isOK := nodeIds[node.Id]; isOK {
@@ -336,7 +336,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	updateNodeEvents := generatedUpdateNodeEventsFromNodeList(nodes)
 	result2, rvMap2 := distributor.ProcessEvents(updateNodeEvents)
 	assert.True(t, result2, "Expecting update nodes successfully")
-	loc := location.NewLocationFromName(string(nodes[0].GeoInfo.Region), string(nodes[0].GeoInfo.ResourcePartition))
+	loc := location.NewLocation(location.Region(nodes[0].GeoInfo.Region), location.ResourcePartition(nodes[0].GeoInfo.ResourcePartition))
 	assert.Equal(t, uint64(rvToGenerate), rvMap2[*loc])
 	assert.Equal(t, oldNodeRV, nodes[0].GetResourceVersionInt64(), "Expecting listed nodes are snapshoted and cannot be affected by update")
 
@@ -351,7 +351,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	watchedEventCount := 0
 	for e := range watchCh {
 		assert.Equal(t, event.Modified, e.Type)
-		nodeLoc := location.NewLocationFromName(string(e.Node.GeoInfo.Region), string(e.Node.GeoInfo.ResourcePartition))
+		nodeLoc := location.NewLocation(location.Region(e.Node.GeoInfo.Region), location.ResourcePartition(e.Node.GeoInfo.ResourcePartition))
 		assert.Equal(t, loc, nodeLoc)
 		watchedEventCount++
 

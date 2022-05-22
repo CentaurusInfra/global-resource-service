@@ -38,8 +38,8 @@ func createRandomNode(rv int) *types.LogicalNode {
 		Id:              id.String(),
 		ResourceVersion: strconv.Itoa(rv),
 		GeoInfo: types.NodeGeoInfo{
-			Region:            "Beijing",
-			ResourcePartition: "RP1",
+			Region:            0,
+			ResourcePartition: 0,
 		},
 	}
 }

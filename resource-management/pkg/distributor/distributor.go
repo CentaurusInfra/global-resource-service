@@ -227,7 +227,7 @@ func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, 
 	eventsToProcess := make([]*node.ManagedNodeEvent, len(events))
 	for i := 0; i < len(events); i++ {
 		if events[i] != nil {
-			loc := location.NewLocationFromName(string(events[i].Node.GeoInfo.Region), string(events[i].Node.GeoInfo.ResourcePartition))
+			loc := location.NewLocation(location.Region(events[i].Node.GeoInfo.Region), location.ResourcePartition(events[i].Node.GeoInfo.ResourcePartition))
 			if loc != nil {
 				eventsToProcess[i] = node.NewManagedNodeEvent(events[i], loc)
 			} else {

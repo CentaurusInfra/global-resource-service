@@ -94,7 +94,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 				// check each node event
 				nodeIds := make(map[string]bool)
 				for _, node := range nodes {
-					nodeLoc := location.NewLocationFromName(string(node.GeoInfo.Region), string(node.GeoInfo.ResourcePartition))
+					nodeLoc := location.NewLocation(location.Region(node.GeoInfo.Region), location.ResourcePartition(node.GeoInfo.ResourcePartition))
 					assert.NotNil(t, nodeLoc)
 					assert.True(t, latestRVs[*nodeLoc] >= node.GetResourceVersionInt64())
 					if _, isOK := nodeIds[node.Id]; isOK {
@@ -278,7 +278,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 					// check each node event
 					nodeIds := make(map[string]bool)
 					for _, node := range nodes {
-						nodeLoc := location.NewLocationFromName(string(node.GeoInfo.Region), string(node.GeoInfo.ResourcePartition))
+						nodeLoc := location.NewLocation(location.Region(node.GeoInfo.Region), location.ResourcePartition(node.GeoInfo.ResourcePartition))
 						assert.NotNil(t, nodeLoc)
 						assert.True(t, latestRVs[*nodeLoc] >= node.GetResourceVersionInt64())
 						if _, isOK := nodeIds[node.Id]; isOK {
@@ -399,6 +399,14 @@ Processing 2000 AddNode events took 1.663906ms.
 Processing 20000 AddNode events took 15.068522ms.
 Processing 200000 AddNode events took 179.720773ms.
 Processing 2000000 AddNode events took 2.324969732s. 24% increase. 8.16% get location from name (can be further optimized), 2% create ManagedNodeEvent
+
+Use int for region and resource partition field
+Processing 20 AddNode events took 46.946µs.
+Processing 200 AddNode events took 165.089µs.
+Processing 2000 AddNode events took 1.494359ms.
+Processing 20000 AddNode events took 13.193021ms.
+Processing 200000 AddNode events took 168.53739ms.
+Processing 2000000 AddNode events took 2.172339411s. 6.5% improvement
 */
 func TestProcessEvents_TwoRPs_AddNodes_Sequential(t *testing.T) {
 	distributor := setUp()
@@ -457,6 +465,14 @@ Processing 2000 AddNode events took 1.32293ms.
 Processing 20000 AddNode events took 9.247576ms.
 Processing 200000 AddNode events took 133.387737ms.
 Processing 2000000 AddNode events took 1.549799563s. - 27% increase
+
+Use int for region and resource partition field
+Processing 20 AddNode events took 94.507µs.
+Processing 200 AddNode events took 237.786µs.
+Processing 2000 AddNode events took 2.307846ms.
+Processing 20000 AddNode events took 8.299796ms.
+Processing 200000 AddNode events took 130.861087ms.
+Processing 2000000 AddNode events took 1.449320502s. - 6.5% improvement
 */
 func TestProcessEvents_TwoRPs_Concurrent(t *testing.T) {
 	distributor := setUp()
