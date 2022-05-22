@@ -9,6 +9,7 @@ import (
 	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/event"
 	"global-resource-service/resource-management/pkg/distributor"
+	apiTypes "global-resource-service/resource-management/pkg/service-api/types"
 )
 
 //TODO: will move construction of the distributor to main function once each components has basic structures in
@@ -85,7 +86,7 @@ func serverWatch(resp http.ResponseWriter, req *http.Request, clientId string) {
 		resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	
+
 	done := req.Context().Done()
 	flusher, ok := resp.(http.Flusher)
 	if !ok {
@@ -134,12 +135,12 @@ func getResourceVersionsMap(req *http.Request) (types.ResourceVersionMap, error)
 		return nil, err
 	}
 
-	crvMap := types.ResourceVersionMap{}
+	wr := apiTypes.WatchRequest{}
 
-	err = json.Unmarshal(body, crvMap)
+	err = json.Unmarshal(body, wr)
 	if err != nil {
 		return nil, err
 	}
 
-	return crvMap, nil
+	return wr.ResourceVersions, nil
 }

@@ -1,4 +1,4 @@
-package service_api
+package types
 
 import "global-resource-service/resource-management/pkg/common-lib/types"
 
