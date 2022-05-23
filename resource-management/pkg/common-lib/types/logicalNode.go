@@ -6,6 +6,8 @@ import (
 )
 
 // for now, simply define those as string
+// RegionName and ResourcePartitionName are updated to int per initial performance test of distributor ProcessEvents
+// Later the data type might be changed back to string due to further performance evaluation result
 type RegionName int
 type ResourcePartitionName int
 type DataCenterName string

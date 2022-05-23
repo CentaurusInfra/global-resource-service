@@ -19,7 +19,7 @@ func NewLocation(region Region, partition ResourcePartition) *Location {
 func NewLocationFromName(regionName, partitionName string) *Location {
 	region := GetRegionFromRegionName(regionName)
 	partition := GetPartitionFromPartitionName(partitionName)
-	if region != -1 && partition != -1 {
+	if region >= 0 && partition >= 0 {
 		return NewLocation(region, partition)
 	}
 	return nil
@@ -138,7 +138,7 @@ var partitionToPartitionName = map[ResourcePartition]string{
 	ResourcePartition20: "RP20",
 }
 
-// later this map will be construction from config
+// later this map will be constructed from config
 var partitionNameToPartition = map[string]ResourcePartition{
 	"RP1":  ResourcePartition1,
 	"RP2":  ResourcePartition2,
