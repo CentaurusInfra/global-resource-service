@@ -219,7 +219,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 				}
 			}
 
-			wg := &sync.WaitGroup{}
+			wg := new(sync.WaitGroup)
 			wg.Add(tt.regionNum * tt.rpNum)
 
 			start := time.Now()
@@ -406,6 +406,14 @@ Processing 2000 AddNode events took 1.494359ms.
 Processing 20000 AddNode events took 13.193021ms.
 Processing 200000 AddNode events took 168.53739ms.
 Processing 2000000 AddNode events took 2.172339411s. 6.5% improvement
+
+. Added persistence
+Processing 20 AddNode events took 197.943µs.
+Processing 200 AddNode events took 1.571032ms.
+Processing 2000 AddNode events took 4.219236ms.
+Processing 20000 AddNode events took 28.11632ms.
+Processing 200000 AddNode events took 294.131531ms.
+Processing 2000000 AddNode events took 4.040301206s.
 */
 func TestProcessEvents_TwoRPs_AddNodes_Sequential(t *testing.T) {
 	distributor := setUp()
@@ -472,6 +480,14 @@ Processing 2000 AddNode events took 2.307846ms.
 Processing 20000 AddNode events took 8.299796ms.
 Processing 200000 AddNode events took 130.861087ms.
 Processing 2000000 AddNode events took 1.449320502s. - 6.5% improvement
+
+. Added persistence
+Processing 20 AddNode events took 430.548µs.
+Processing 200 AddNode events took 1.231249ms.
+Processing 2000 AddNode events took 2.68838ms.
+Processing 20000 AddNode events took 18.140626ms.
+Processing 200000 AddNode events took 175.578763ms.
+Processing 2000000 AddNode events took 2.460715575s.
 */
 func TestProcessEvents_TwoRPs_Concurrent(t *testing.T) {
 	distributor := setUp()
@@ -484,7 +500,7 @@ func TestProcessEvents_TwoRPs_Concurrent(t *testing.T) {
 		eventsAdd2 := generateAddNodeEvent(nodeCounts[i], location.NewLocation(location.Shanghai, location.ResourcePartition2))
 		start := time.Now()
 
-		wg := &sync.WaitGroup{}
+		wg := new(sync.WaitGroup)
 		wg.Add(2)
 
 		go func(done *sync.WaitGroup, eventsToProcess []*event.NodeEvent) {

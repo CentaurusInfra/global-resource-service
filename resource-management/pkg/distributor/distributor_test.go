@@ -136,6 +136,14 @@ Processing 1000 AddNode events took 834.395µs.
 Processing 10000 AddNode events took 7.914261ms.
 Processing 100000 AddNode events took 106.144575ms.
 Processing 1000000 AddNode events took 1.170175248s. - latency increased 40%, will improve later
+
+. Added persistence
+Processing 10 AddNode events took 78.813µs.
+Processing 100 AddNode events took 722.073µs.
+Processing 1000 AddNode events took 2.270763ms.
+Processing 10000 AddNode events took 14.54155ms.
+Processing 100000 AddNode events took 136.840846ms.
+Processing 1000000 AddNode events took 2.077560132s.
 */
 func TestAddNodes(t *testing.T) {
 	distributor := setUp()
