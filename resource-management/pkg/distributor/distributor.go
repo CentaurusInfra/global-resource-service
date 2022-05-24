@@ -25,6 +25,8 @@ type ResourceDistributor struct {
 	// clientId to virtual node store map
 	clientToStores map[string][]*storage.VirtualNodeStore
 	allocateLock   sync.Mutex
+
+	persistHelper store.Interface
 }
 
 var _distributor *ResourceDistributor = nil
@@ -45,6 +47,10 @@ func GetResourceDistributor() *ResourceDistributor {
 		}
 	})
 	return _distributor
+}
+
+func (dis *ResourceDistributor) SetPersistHelper(persistTool store.Interface) {
+	dis.persistHelper = persistTool
 }
 
 // TODO - get virtual node number, region num, partition num from external
@@ -242,7 +248,10 @@ func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, 
 			break
 		}
 	}
-	result, rvMap := dis.defaultNodeStore.ProcessNodeEvents(eventsToProcess)
+
+	persistHelper := storage.NewDistributorPersistHelper(dis.persistHelper)
+	result, rvMap := dis.defaultNodeStore.ProcessNodeEvents(eventsToProcess, persistHelper)
+	persistHelper.WaitForAllNodesSaved()
 	return result, rvMap
 }
 
@@ -259,7 +268,7 @@ func (dis *ResourceDistributor) persistVirtualNodesAssignment(clientId string, a
 		ClientId:     clientId,
 		VirtualNodes: vNodeConfigs,
 	}
-	result := storage.GetDistributorPersistHelper().PersistVirtualNodesAssignment(assignment)
+	result := storage.NewDistributorPersistHelper(dis.persistHelper).PersistVirtualNodesAssignment(assignment)
 	if !result {
 		// TODO
 	}

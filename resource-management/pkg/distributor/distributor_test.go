@@ -45,7 +45,7 @@ func setUp() *ResourceDistributor {
 	distributor.clientToStores = make(map[string][]*storage.VirtualNodeStore)
 
 	// initialize persistent store
-	storage.GetDistributorPersistHelper().SetPersistHelper(fakeStorage)
+	distributor.SetPersistHelper(fakeStorage)
 
 	return distributor
 }

@@ -245,16 +245,16 @@ func (ns *NodeStore) UpdateNode(nodeEvent *node.ManagedNodeEvent) {
 func (ns NodeStore) DeleteNode(nodeEvent event.NodeEvent) {
 }
 
-func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*node.ManagedNodeEvent) (bool, types.ResourceVersionMap) {
+func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*node.ManagedNodeEvent, persistHelper *DistributorPersistHelper) (bool, types.ResourceVersionMap) {
 	for _, e := range nodeEvents {
 		if e == nil {
 			break
 		}
-		ns.processNodeEvent(e)
+		ns.processNodeEvent(e, persistHelper)
 	}
 
 	// persist disk
-	result := GetDistributorPersistHelper().PersistNodesAndStoreConfigs(ns.getNodeStoreStatus())
+	result := persistHelper.PersistStoreConfigs(ns.getNodeStoreStatus())
 	if !result {
 		// TODO
 	}
@@ -263,14 +263,14 @@ func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*node.ManagedNodeEvent) (boo
 	return true, ns.GetCurrentResourceVersions()
 }
 
-func (ns *NodeStore) processNodeEvent(nodeEvent *node.ManagedNodeEvent) bool {
+func (ns *NodeStore) processNodeEvent(nodeEvent *node.ManagedNodeEvent, persistHelper *DistributorPersistHelper) bool {
 	switch nodeEvent.GetEventType() {
 	case event.Added:
 		ns.CreateNode(nodeEvent)
-		GetDistributorPersistHelper().UpdateNode(nodeEvent.GetNodeEvent().Node)
+		persistHelper.PersistNode(nodeEvent.GetNodeEvent().Node)
 	case event.Modified:
 		ns.UpdateNode(nodeEvent)
-		GetDistributorPersistHelper().UpdateNode(nodeEvent.GetNodeEvent().Node)
+		persistHelper.PersistNode(nodeEvent.GetNodeEvent().Node)
 	default:
 		return false
 	}
