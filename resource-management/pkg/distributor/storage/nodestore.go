@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"global-resource-service/resource-management/pkg/common-lib/hash"
+	"global-resource-service/resource-management/pkg/common-lib/interfaces/store"
 	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/event"
 	"global-resource-service/resource-management/pkg/common-lib/types/location"
@@ -253,6 +254,10 @@ func (ns *NodeStore) ProcessNodeEvents(nodeEvents []*node.ManagedNodeEvent) (boo
 	}
 
 	// persist disk
+	result := GetDistributorPersistHelper().PersistNodesAndStoreConfigs(ns.getNodeStoreStatus())
+	if !result {
+		// TODO
+	}
 
 	// TODO - make a copy of currentRVs in case modification happen unexpectedly
 	return true, ns.GetCurrentResourceVersions()
@@ -262,8 +267,10 @@ func (ns *NodeStore) processNodeEvent(nodeEvent *node.ManagedNodeEvent) bool {
 	switch nodeEvent.GetEventType() {
 	case event.Added:
 		ns.CreateNode(nodeEvent)
+		GetDistributorPersistHelper().UpdateNode(nodeEvent.GetNodeEvent().Node)
 	case event.Modified:
 		ns.UpdateNode(nodeEvent)
+		GetDistributorPersistHelper().UpdateNode(nodeEvent.GetNodeEvent().Node)
 	default:
 		return false
 	}
@@ -364,5 +371,14 @@ func (ns *NodeStore) updateNodeInRing(hashValue float64, ringId int, nodeEvent *
 		// ?? - report error or not?
 		vNodeStore.mu.Unlock()
 		ns.addNodeToRing(hashValue, ringId, nodeEvent)
+	}
+}
+
+func (ns *NodeStore) getNodeStoreStatus() *store.NodeStoreStatus {
+	return &store.NodeStoreStatus{
+		RegionNum:              ns.regionNum,
+		PartitionMaxNum:        ns.partitionMaxNum,
+		VirtualNodeNumPerRP:    ns.virtualNodeNum / (ns.regionNum * ns.partitionMaxNum),
+		CurrentResourceVerions: ns.GetCurrentResourceVersions(),
 	}
 }

@@ -27,6 +27,10 @@ var defaultPartition = location.ResourcePartition1
 
 const defaultVirtualStoreNumPerRP = 200 // 10K per resource partition, 50 hosts per virtual node store
 
+var fakeStorage = &storage.FakeStorageInterface{
+	PersistDelayInNS: 20,
+}
+
 func setUp() *ResourceDistributor {
 	singleTestLock.Lock()
 	distributor := GetResourceDistributor()
@@ -39,6 +43,9 @@ func setUp() *ResourceDistributor {
 
 	// flush clientToStores map
 	distributor.clientToStores = make(map[string][]*storage.VirtualNodeStore)
+
+	// initialize persistent store
+	storage.GetDistributorPersistHelper().SetPersistHelper(fakeStorage)
 
 	return distributor
 }

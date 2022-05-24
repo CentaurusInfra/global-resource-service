@@ -7,6 +7,7 @@ import (
 	"k8s.io/klog/v2"
 	"sync"
 
+	"global-resource-service/resource-management/pkg/common-lib/interfaces/store"
 	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/event"
 	"global-resource-service/resource-management/pkg/common-lib/types/location"
@@ -120,6 +121,9 @@ func (dis *ResourceDistributor) allocateNodesToClient(clientId string, requested
 		store.AssignToClient(clientId, eventQueue)
 	}
 	dis.clientToStores[clientId] = selectedStores
+
+	// persist virtual node assignment
+	dis.persistVirtualNodesAssignment(clientId, selectedStores)
 
 	return true, nil
 }
@@ -240,4 +244,24 @@ func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, 
 	}
 	result, rvMap := dis.defaultNodeStore.ProcessNodeEvents(eventsToProcess)
 	return result, rvMap
+}
+
+func (dis *ResourceDistributor) persistVirtualNodesAssignment(clientId string, assignedStores []*storage.VirtualNodeStore) bool {
+	vNodeConfigs := make([]*store.VirtualNodeConfig, len(assignedStores))
+	for i, s := range assignedStores {
+		vNodeToSave := &store.VirtualNodeConfig{
+			Location: s.GetLocation(),
+		}
+		vNodeToSave.Lowerbound, vNodeToSave.Upperbound = s.GetRange()
+		vNodeConfigs[i] = vNodeToSave
+	}
+	assignment := &store.VirtualNodeAssignment{
+		ClientId:     clientId,
+		VirtualNodes: vNodeConfigs,
+	}
+	result := storage.GetDistributorPersistHelper().PersistVirtualNodesAssignment(assignment)
+	if !result {
+		// TODO
+	}
+	return result
 }
