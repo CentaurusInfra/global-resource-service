@@ -242,7 +242,7 @@ func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, 
 			if loc != nil {
 				eventsToProcess[i] = node.NewManagedNodeEvent(events[i], loc)
 			} else {
-				fmt.Printf("Invalid region %v and/or resource partition %v\n", events[i].Node.GeoInfo.Region, events[i].Node.GeoInfo.ResourcePartition)
+				klog.Errorf("Invalid region %v and/or resource partition %v\n", events[i].Node.GeoInfo.Region, events[i].Node.GeoInfo.ResourcePartition)
 			}
 		} else {
 			break

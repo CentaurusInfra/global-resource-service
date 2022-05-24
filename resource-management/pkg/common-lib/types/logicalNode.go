@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"k8s.io/klog/v2"
 	"strconv"
 )
 
@@ -115,7 +116,7 @@ func (n *LogicalNode) Copy() *LogicalNode {
 func (n *LogicalNode) GetResourceVersionInt64() uint64 {
 	rv, err := strconv.ParseUint(n.ResourceVersion, 10, 64)
 	if err != nil {
-		fmt.Printf("Unable to convert resource version %s to uint64\n", n.ResourceVersion)
+		klog.Errorf("Unable to convert resource version %s to uint64\n", n.ResourceVersion)
 		return 0
 	}
 	return rv

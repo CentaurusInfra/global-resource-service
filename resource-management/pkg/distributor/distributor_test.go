@@ -1,7 +1,6 @@
 package distributor
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"strconv"
@@ -81,7 +80,7 @@ func TestDistributorInit(t *testing.T) {
 		loc := store.GetLocation()
 		assert.NotNil(t, loc, "Location of store should not be empty")
 		if defaultLocBeijing_RP1.Equal(loc) {
-			fmt.Printf("virtual node store %d, location %v, hash range (%f, %f]\n", i, store.GetLocation(), lowerBound, upperBound)
+			t.Logf("virtual node store %d, location %v, hash range (%f, %f]\n", i, store.GetLocation(), lowerBound, upperBound)
 		}
 	}
 }
@@ -90,7 +89,7 @@ func measureProcessEvent(t *testing.T, dis *ResourceDistributor, eventType strin
 	start := time.Now()
 	result, rvMap := dis.ProcessEvents(events)
 	duration := time.Since(start)
-	fmt.Printf("Processing %d %s events took %v. Composite RVs %v\n", len(events), eventType, duration, rvMap)
+	t.Logf("Processing %d %s events took %v. Composite RVs %v\n", len(events), eventType, duration, rvMap)
 
 	assert.True(t, result, "Expecting successfull event processing but got error")
 	assert.NotNil(t, rvMap, "Expecting non nill rv map")
@@ -279,10 +278,10 @@ func TestRegisterClient_WithinLimit(t *testing.T) {
 			vs := virtualStoresAssignedToClient[i]
 			assert.Equal(t, clientId, vs.GetAssignedClient(), "Unexpected virtual store client id %s", clientId)
 			lower, upper := vs.GetRange()
-			fmt.Printf("Virtual node store (%f, %f] is assigned to client %s, host number %d\n", lower, upper, clientId, vs.GetHostNum())
+			t.Logf("Virtual node store (%f, %f] is assigned to client %s, host number %d\n", lower, upper, clientId, vs.GetHostNum())
 			hostCount += vs.GetHostNum()
 		}
-		fmt.Printf("Total %d hosts are assigned to client %s\nTook %v to register the client.\n", hostCount, clientId, duration)
+		t.Logf("Total %d hosts are assigned to client %s\nTook %v to register the client.\n", hostCount, clientId, duration)
 		assert.True(t, hostCount >= requestedHostNum, "Assigned host number %d is less than requested %d", hostCount, requestedHostNum)
 
 		// check nodes number with list nodes
@@ -323,7 +322,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, latestRVs)
 	assert.True(t, len(nodes) >= 500)
-	fmt.Printf("Latest rvs: %v. Total hosts: %d\n", latestRVs, len(nodes))
+	t.Logf("Latest rvs: %v. Total hosts: %d\n", latestRVs, len(nodes))
 	// check each node event
 	nodeIds := make(map[string]bool)
 	for _, node := range nodes {
@@ -367,5 +366,5 @@ func TestRegistrationWorkflow(t *testing.T) {
 		}
 	}
 	assert.Equal(t, len(nodes), watchedEventCount)
-	fmt.Printf("Latest rvs after updates: %v\n", rvMap2)
+	t.Logf("Latest rvs after updates: %v\n", rvMap2)
 }

@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"fmt"
+	"k8s.io/klog/v2"
 	"time"
 
 	"global-resource-service/resource-management/pkg/common-lib/interfaces/store"
@@ -31,10 +31,10 @@ func (fs *FakeStorageInterface) PersistVirtualNodesAssignments(assignment *store
 
 func (fs *FakeStorageInterface) simulateDelay(timesOfWrite int) {
 	if fs.PersistDelayInNS > 0 {
-		fmt.Printf("Simulate disk persist operation delaying %v\n", time.Duration(timesOfWrite*fs.PersistDelayInNS)*time.Nanosecond)
+		klog.V(3).Infof("Simulate disk persist operation delaying %v\n", time.Duration(timesOfWrite*fs.PersistDelayInNS)*time.Nanosecond)
 		time.Sleep(time.Duration(timesOfWrite*fs.PersistDelayInNS) * time.Nanosecond)
 	} else {
-		fmt.Printf("Simulate disk persist operation delaying %v\n", time.Duration(timesOfWrite)*PersistDelayDefault)
+		klog.V(3).Infof("Simulate disk persist operation delaying %v\n", time.Duration(timesOfWrite)*PersistDelayDefault)
 		time.Sleep(time.Duration(timesOfWrite) * PersistDelayDefault)
 	}
 }

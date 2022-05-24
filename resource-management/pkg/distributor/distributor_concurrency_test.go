@@ -1,7 +1,6 @@
 package distributor
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"strconv"
 	"sync"
@@ -87,7 +86,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotNil(t, latestRVs)
 				assert.True(t, len(nodes) >= tt.hostPerClient)
-				// fmt.Printf("Client %d %s latest rvs: %v.Total hosts: %d\n", i, clientId, latestRVs, len(nodes))
+				// t.Logf("Client %d %s latest rvs: %v.Total hosts: %d\n", i, clientId, latestRVs, len(nodes))
 				latestRVsByClient[i] = latestRVs
 				nodesByClient[i] = nodes
 
@@ -149,7 +148,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 						result, rvMap := distributor.ProcessEvents(updateNodeEvents)
 						assert.True(t, result)
 						assert.NotNil(t, rvMap)
-						//fmt.Printf("Successfully processed %d update node events. RV map returned: %v. ClientId %s\n", len(nodes), rvMap, clientId)
+						//t.Logf("Successfully processed %d update node events. RV map returned: %v. ClientId %s\n", len(nodes), rvMap, clientId)
 					}
 				}(tt.updateEventNum, nodesByClient[i], clientIds[i])
 			}
@@ -157,7 +156,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 			// wait for watch done
 			allWaitGroup.Wait()
 			duration += time.Since(start)
-			fmt.Printf("Test %s succeed! Total duration %v\n", tt.name, duration)
+			t.Logf("Test %s succeed! Total duration %v\n", tt.name, duration)
 		})
 	}
 }
@@ -271,7 +270,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 					assert.Nil(t, err)
 					assert.NotNil(t, latestRVs)
 					assert.True(t, len(nodes) >= tt.hostPerClient)
-					// fmt.Printf("Client %d %s latest rvs: %v.Total hosts: %d\n", i, clientId, latestRVs, len(nodes))
+					// t.Logf("Client %d %s latest rvs: %v.Total hosts: %d\n", i, clientId, latestRVs, len(nodes))
 					latestRVsByClient[i] = latestRVs
 					nodesByClient[i] = nodes
 
@@ -315,14 +314,14 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 
 						if eventCount >= expectedEventCount {
 							wg.Done()
-							fmt.Printf("Successfully watched %d update node events.**************************\n", expectedEventCount)
+							t.Logf("Successfully watched %d update node events.**************************\n", expectedEventCount)
 							return
 						}
 					}
 				}(tt.updateEventNum, watchCh, allWaitGroup)
 			}
 
-			fmt.Printf("Starting to watch update events ##################\n")
+			t.Log("Starting to watch update events ##################\n")
 
 			// update nodes
 			for i := 0; i < tt.clientNum; i++ {
@@ -345,7 +344,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 						result, rvMap := distributor.ProcessEvents(updateNodeEvents)
 						assert.True(t, result)
 						assert.NotNil(t, rvMap)
-						//fmt.Printf("Successfully processed %d update node events. RV map returned: %v. ClientId %s\n", len(nodes), rvMap, clientId)
+						//t.Logf("Successfully processed %d update node events. RV map returned: %v. ClientId %s\n", len(nodes), rvMap, clientId)
 					}
 				}(tt.updateEventNum, nodesByClient[i], clientIds[i])
 			}
@@ -354,7 +353,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 			allWaitGroup.Wait()
 			duration += time.Since(start)
 
-			fmt.Printf("Test %s succeed! Total duration %v\n", tt.name, duration)
+			t.Logf("Test %s succeed! Total duration %v\n", tt.name, duration)
 		})
 	}
 }
@@ -421,7 +420,7 @@ func TestProcessEvents_TwoRPs_AddNodes_Sequential(t *testing.T) {
 		distributor.ProcessEvents(eventsAdd1)
 		_, rvMap := distributor.ProcessEvents(eventsAdd2)
 		duration := time.Since(start)
-		fmt.Printf("Processing %d AddNode events took %v. Composite RVs %v\n", nodeCounts[i]*2, duration, rvMap)
+		t.Logf("Processing %d AddNode events took %v. Composite RVs %v\n", nodeCounts[i]*2, duration, rvMap)
 	}
 }
 
@@ -500,6 +499,6 @@ func TestProcessEvents_TwoRPs_Concurrent(t *testing.T) {
 
 		wg.Wait()
 		duration := time.Since(start)
-		fmt.Printf("Processing %d AddNode events took %v.\n", nodeCounts[i]*2, duration)
+		t.Logf("Processing %d AddNode events took %v.\n", nodeCounts[i]*2, duration)
 	}
 }
