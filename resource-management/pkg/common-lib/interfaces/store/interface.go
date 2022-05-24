@@ -5,6 +5,11 @@ import (
 	"global-resource-service/resource-management/pkg/common-lib/types/location"
 )
 
+const (
+	Preserve_VirtualNodesAssignments_KeyPrefix = "VirtualNodesAssignments"
+	Preserve_NodeStoreStatus_KeyPrefix         = "NodeStoreStatus"
+)
+
 type Interface interface {
 	PersistNodes([]*types.LogicalNode) bool
 	PersistNodeStoreStatus(*NodeStoreStatus) bool
@@ -25,9 +30,17 @@ type NodeStoreStatus struct {
 	CurrentResourceVerions types.ResourceVersionMap
 }
 
+func (nsStatus *NodeStoreStatus) GetKey() string {
+	return Preserve_NodeStoreStatus_KeyPrefix
+}
+
 type VirtualNodeAssignment struct {
 	ClientId     string
 	VirtualNodes []*VirtualNodeConfig
+}
+
+func (assignment *VirtualNodeAssignment) GetKey() string {
+	return Preserve_VirtualNodesAssignments_KeyPrefix
 }
 
 type VirtualNodeConfig struct {
