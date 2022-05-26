@@ -20,6 +20,32 @@ func NewInstaller(d di.Interface) *Installer {
 	return &Installer{d}
 }
 
+func (i *Installer) ClientAdministrationHandler(resp http.ResponseWriter, req *http.Request) {
+	klog.V(3).Infof("handle /client. URL path: %s", req.URL.Path)
+
+	switch req.Method {
+	case http.MethodPost:
+		i.handleClientRegistration(resp, req)
+		return
+	case http.MethodDelete:
+        i.handleClientUnRegistration(resp, req)
+		return
+	default:
+		resp.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+}
+
+func (i *Installer) handleClientRegistration(reesp http.ResponseWriter, req *http.Request) {
+
+
+}
+
+func (i *Installer) handleClientUnRegistration(reesp http.ResponseWriter, req *http.Request) {
+
+}
+
 func (i *Installer) ResourceHandler(resp http.ResponseWriter, req *http.Request) {
 	klog.V(3).Infof("handle /resource. URL path: %s", req.URL.Path)
 

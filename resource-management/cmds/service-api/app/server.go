@@ -27,10 +27,14 @@ func Run(c *Config) error {
 
 	r := mux.NewRouter().StrictSlash(true)
 
+	// TODO: reuse k8s mux wrapper, pathrecorder.go for simplify this handler by each path
 	r.HandleFunc(endpoints.ListResourcePath, installer.ResourceHandler).Methods("GET")
 	r.HandleFunc(endpoints.WatchResourcePath, installer.ResourceHandler)
 	r.HandleFunc(endpoints.UpdateResourcePath, installer.ResourceHandler)
 	r.HandleFunc(endpoints.ReduceResourcePath, installer.ResourceHandler)
+
+	r.HandleFunc(endpoints.ClientAdminitrationPath, installer.ClientAdministrationHandler)
+	r.HandleFunc(endpoints.ClientAdminitrationPath + "/{clientId}", installer.ClientAdministrationHandler)
 
 	var addr string
 	var p string
