@@ -11,6 +11,7 @@ import (
 	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/event"
 	"global-resource-service/resource-management/pkg/distributor"
+	"global-resource-service/resource-management/pkg/distributor/storage"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -59,6 +60,12 @@ func TestHttpGet(t *testing.T) {
 	distributor := setUp()
 	defer tearDown(distributor)
 
+	fakeStorage := &storage.FakeStorageInterface{
+		PersistDelayInNS: 20,
+	}
+	distributor.SetPersistHelper(fakeStorage)
+	installer := NewInstaller(distributor)
+
 	// initialize node store with 10K nodes
 	eventsAdd := generateAddNodeEvent(10000)
 	distributor.ProcessEvents(eventsAdd)
@@ -79,7 +86,7 @@ func TestHttpGet(t *testing.T) {
 
 	ctx := context.WithValue(req.Context(), "clientid", clientId)
 
-	ResourceHandler(recorder, req.WithContext(ctx))
+	installer.ResourceHandler(recorder, req.WithContext(ctx))
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Equal(t, []byte(clientId), recorder.Body.Bytes())
 }
