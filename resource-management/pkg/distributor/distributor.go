@@ -26,7 +26,7 @@ type ResourceDistributor struct {
 	clientToStores map[string][]*storage.VirtualNodeStore
 	allocateLock   sync.Mutex
 
-	persistHelper store.Interface
+	persistHelper store.StoreInterface
 }
 
 var _distributor *ResourceDistributor = nil
@@ -49,7 +49,7 @@ func GetResourceDistributor() *ResourceDistributor {
 	return _distributor
 }
 
-func (dis *ResourceDistributor) SetPersistHelper(persistTool store.Interface) {
+func (dis *ResourceDistributor) SetPersistHelper(persistTool store.StoreInterface) {
 	dis.persistHelper = persistTool
 }
 

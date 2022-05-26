@@ -10,7 +10,7 @@ const (
 	Preserve_NodeStoreStatus_KeyPrefix         = "NodeStoreStatus"
 )
 
-type Interface interface {
+type StoreInterface interface {
 	PersistNodes([]*types.LogicalNode) bool
 	PersistNodeStoreStatus(*NodeStoreStatus) bool
 	PersistVirtualNodesAssignments(*VirtualNodeAssignment) bool

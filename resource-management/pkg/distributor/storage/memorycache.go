@@ -10,17 +10,17 @@ import (
 type DistributorPersistHelper struct {
 	persistNodeWaitGroup *sync.WaitGroup
 
-	persistHelper store.Interface
+	persistHelper store.StoreInterface
 }
 
-func NewDistributorPersistHelper(persistHelper store.Interface) *DistributorPersistHelper {
+func NewDistributorPersistHelper(persistHelper store.StoreInterface) *DistributorPersistHelper {
 	return &DistributorPersistHelper{
 		persistNodeWaitGroup: new(sync.WaitGroup),
 		persistHelper:        persistHelper,
 	}
 }
 
-func (c *DistributorPersistHelper) SetPersistHelper(persistTool store.Interface) {
+func (c *DistributorPersistHelper) SetPersistHelper(persistTool store.StoreInterface) {
 	c.persistHelper = persistTool
 }
 
@@ -29,7 +29,7 @@ func (c *DistributorPersistHelper) SetWaitCount(count int) {
 }
 
 func (c *DistributorPersistHelper) PersistNode(newNode *types.LogicalNode) {
-	go func(persistHelper store.Interface, node *types.LogicalNode, wg *sync.WaitGroup) {
+	go func(persistHelper store.StoreInterface, node *types.LogicalNode, wg *sync.WaitGroup) {
 		for {
 			result := persistHelper.PersistNodes([]*types.LogicalNode{newNode})
 			if result {
