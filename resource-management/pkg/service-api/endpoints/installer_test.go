@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -75,7 +76,12 @@ func TestHttpGet(t *testing.T) {
 	clientId, _, err := distributor.RegisterClient(requestedHostNum)
 
 	// client list nodes
-	//nodes, _, err := distributor.ListNodesForClient(clientId)
+	expectedNodes, _, err := distributor.ListNodesForClient(clientId)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	resourcePath := RegionlessResourcePath + "/" + clientId
 	req, err := http.NewRequest(http.MethodGet, resourcePath, nil)
 	if err != nil {
@@ -87,6 +93,31 @@ func TestHttpGet(t *testing.T) {
 	ctx := context.WithValue(req.Context(), "clientid", clientId)
 
 	installer.ResourceHandler(recorder, req.WithContext(ctx))
+
+	actualNodes := make([]types.LogicalNode, 150)
+
+	json.Unmarshal(recorder.Body.Bytes(), &actualNodes)
+
 	assert.Equal(t, http.StatusOK, recorder.Code)
-	assert.Equal(t, []byte(clientId), recorder.Body.Bytes())
+	assert.Equal(t, len(expectedNodes), len(actualNodes))
+
+	// Node list is not ordered, so have to do a one by one comparison
+	for _, n := range expectedNodes {
+		if findNodeInList(n, actualNodes) == false {
+			t.Logf("expectd node Id [%v] not found", n.Id)
+			t.Fatal("Nodes are not equal")
+		}
+	}
+
+	return
+}
+
+func findNodeInList(n *types.LogicalNode, l []types.LogicalNode) bool {
+	for i := 0; i < len(l); i++ {
+		if n.Id == l[i].Id {
+			return true
+		}
+	}
+
+	return false
 }
