@@ -37,13 +37,55 @@ func (i *Installer) ClientAdministrationHandler(resp http.ResponseWriter, req *h
 
 }
 
-func (i *Installer) handleClientRegistration(reesp http.ResponseWriter, req *http.Request) {
+func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http.Request) {
 
+	body, err  := ioutil.ReadAll(req.Body)
+	if err != nil {
+		klog.V(3).Infof("error read request. error %v", err)
+		resp.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
+	clientReq := apiTypes.ClientRegistrationRequest{}
+
+	err = json.Unmarshal(body, &clientReq)
+	if err != nil {
+		klog.V(3).Infof("error unmarshalling request body. error %v", err)
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	clientId, _, err := i.dist.RegisterClient(clientReq.InitQuota.TotalMachines)
+
+	if err != nil {
+		klog.V(3).Infof("error register client. error %v", err)
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ret := apiTypes.ClientRegistrationResponse{ClientId: clientId,  GrantedQuota: nil}
+
+	b, err := json.Marshal(ret)
+	if err != nil {
+		klog.V(3).Infof("error marshaling client response. error %v", err)
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	_, err = resp.Write(b)
+	if err != nil {
+		klog.V(3).Infof("error writting response. error %v", err)
+		resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	return
 }
 
-func (i *Installer) handleClientUnRegistration(reesp http.ResponseWriter, req *http.Request) {
-
+func (i *Installer) handleClientUnRegistration(resp http.ResponseWriter, req *http.Request) {
+	klog.V(3).Infof("to be implmented")
+	resp.WriteHeader(http.StatusNotImplemented)
+	return
 }
 
 func (i *Installer) ResourceHandler(resp http.ResponseWriter, req *http.Request) {

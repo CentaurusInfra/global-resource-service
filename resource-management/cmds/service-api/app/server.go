@@ -1,6 +1,9 @@
 package app
 
 import (
+	"fmt"
+	"global-resource-service/resource-management/pkg/common-lib/interfaces/store"
+	"global-resource-service/resource-management/pkg/common-lib/types"
 	"net/http"
 	"time"
 
@@ -18,11 +21,30 @@ type Config struct {
 	MasterPort   string
 }
 
+// replace this with the redis store
+type fs struct {}
+
+func (f *fs) PersistClient (id string, details *types.ClientInfoType) error {
+	return fmt.Errorf("not impl")
+}
+func (f *fs) PersistNodes(nodesToPersist []*types.LogicalNode) bool {
+	return false
+}
+
+func (f *fs) PersistNodeStoreStatus(nodeStoreStatus *store.NodeStoreStatus) bool {
+	return false
+}
+
+func (f *fs) PersistVirtualNodesAssignments(assignment *store.VirtualNodeAssignment) bool {
+	 return false
+}
 // Run and create new service-api.  This should never exit.
 func Run(c *Config) error {
 	klog.V(3).Infof("Starting the API server...")
 
+	store := &fs{}
 	dist := distributor.GetResourceDistributor()
+	dist.SetPersistHelper(store)
 	installer := endpoints.NewInstaller(dist)
 
 	r := mux.NewRouter().StrictSlash(true)

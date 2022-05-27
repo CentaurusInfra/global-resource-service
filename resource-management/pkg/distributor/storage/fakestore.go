@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"k8s.io/klog/v2"
 	"time"
 
@@ -37,4 +38,8 @@ func (fs *FakeStorageInterface) simulateDelay(timesOfWrite int) {
 		klog.V(3).Infof("Simulate disk persist operation delaying %v\n", time.Duration(timesOfWrite)*PersistDelayDefault)
 		time.Sleep(time.Duration(timesOfWrite) * PersistDelayDefault)
 	}
+}
+
+func (fs *FakeStorageInterface) PersistClient (client *types.ClientInfoType) error {
+	return errors.New("not implemented")
 }
