@@ -55,6 +55,13 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 		return
 	}
 
+	requestedMachines := clientReq.InitQuota.TotalMachines
+	if requestedMachines > types.MaxTotalMachinesPerRequest || requestedMachines < types.MinTotalMachinesPerRequest {
+		klog.V(3).Infof("Invalid request of resources. requested total machines: %v", requestedMachines)
+		resp.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	clientId, _, err := i.dist.RegisterClient(clientReq.InitQuota.TotalMachines)
 
 	if err != nil {

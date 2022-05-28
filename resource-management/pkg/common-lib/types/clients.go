@@ -1,5 +1,11 @@
 package types
 
+const (
+	// Max and Min request per client request during registration or update resources
+	MaxTotalMachinesPerRequest = 25000
+	MinTotalMachinesPerRequest = 1000
+)
+
 // ResourceQuota is client resource quota for a given client
 // resource quota can be super set of each client list request of resources
 // TBD post 630.
