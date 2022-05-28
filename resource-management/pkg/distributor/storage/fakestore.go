@@ -40,7 +40,7 @@ func (fs *FakeStorageInterface) simulateDelay(timesOfWrite int) {
 	}
 }
 
-func (fs *FakeStorageInterface) PersistClient (client *types.ClientInfoType) error {
+func (fs *FakeStorageInterface) PersistClient (clientId string, client *types.ClientInfoType) error {
 	return errors.New("not implemented")
 }
 

@@ -63,7 +63,7 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 		return
 	}
 
-	ret := apiTypes.ClientRegistrationResponse{ClientId: clientId,  GrantedQuota: nil}
+	ret := apiTypes.ClientRegistrationResponse{ClientId: clientId,  GrantedQuota: types.ResourceQuota{}}
 
 	b, err := json.Marshal(ret)
 	if err != nil {
@@ -88,6 +88,7 @@ func (i *Installer) handleClientUnRegistration(resp http.ResponseWriter, req *ht
 	return
 }
 
+// TODO: post 630, after the full quota based request support, ListNodesForClient will need some basic quota check
 func (i *Installer) ResourceHandler(resp http.ResponseWriter, req *http.Request) {
 	klog.V(3).Infof("handle /resource. URL path: %s", req.URL.Path)
 
