@@ -16,6 +16,7 @@ type StoreInterface interface {
 	PersistVirtualNodesAssignments(*VirtualNodeAssignment) bool
 
 	PersistClient(string,  *types.ClientInfoType) error
+	GetClient(string) (*types.ClientInfoType, error)
 }
 
 type NodeStoreStatus struct {

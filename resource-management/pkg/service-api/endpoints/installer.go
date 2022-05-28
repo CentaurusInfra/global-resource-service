@@ -37,8 +37,8 @@ func (i *Installer) ClientAdministrationHandler(resp http.ResponseWriter, req *h
 
 }
 
+// TODO: error handling function
 func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http.Request) {
-
 	body, err  := ioutil.ReadAll(req.Body)
 	if err != nil {
 		klog.V(3).Infof("error read request. error %v", err)
@@ -50,7 +50,7 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 
 	err = json.Unmarshal(body, &clientReq)
 	if err != nil {
-		klog.V(3).Infof("error unmarshalling request body. error %v", err)
+		klog.V(3).Infof("error unmarshal request body. error %v", err)
 		resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -67,14 +67,14 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 
 	b, err := json.Marshal(ret)
 	if err != nil {
-		klog.V(3).Infof("error marshaling client response. error %v", err)
+		klog.V(3).Infof("error marshal client response. error %v", err)
 		resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	_, err = resp.Write(b)
 	if err != nil {
-		klog.V(3).Infof("error writting response. error %v", err)
+		klog.V(3).Infof("error write response. error %v", err)
 		resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -83,7 +83,7 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 }
 
 func (i *Installer) handleClientUnRegistration(resp http.ResponseWriter, req *http.Request) {
-	klog.V(3).Infof("to be implmented")
+	klog.V(3).Infof("not implemented")
 	resp.WriteHeader(http.StatusNotImplemented)
 	return
 }
