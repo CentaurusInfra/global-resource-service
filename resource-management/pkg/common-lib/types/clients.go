@@ -18,6 +18,7 @@ type ResourceQuota struct {
 type Client struct {
 	ClientId string `json:"client_id"`
 	ClientInfo ClientInfoType `json:"client_info,omitempty"`
+	Quota ResourceQuota `json:"client_quota,omitempty"`
 }
 
 type ClientInfoType struct {

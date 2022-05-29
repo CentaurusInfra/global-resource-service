@@ -235,26 +235,26 @@ func (gr *Goredis) GetVirtualNodesAssignments() *store.VirtualNodeAssignment {
 	return virtualNodeAssignment
 }
 
-func (gr *Goredis) PersistClient (clientId string, clientInfo *types.ClientInfoType) error {
-	ci, err := json.Marshal(clientInfo)
+func (gr *Goredis) PersistClient (clientId string, client *types.Client) error {
+	ci, err := json.Marshal(client)
 
 	if err != nil {
-		klog.Errorf("Error marshalling clientInfo. error %v", err)
+		klog.Errorf("Error marshalling client. error %v", err)
 		return err
 	}
 
 	err = gr.client.Set(gr.ctx, clientId, ci, 0).Err()
 
 	if err != nil {
-		klog.Errorf("Error persisting clientInfo to Redis Store. error %v", err)
+		klog.Errorf("Error persisting client to Redis Store. error %v", err)
 		return err
 	}
 
 	return nil
 }
 
-func (gr *Goredis) GetClient(clientId string) (*types.ClientInfoType, error) {
-	ci := &types.ClientInfoType{}
+func (gr *Goredis) GetClient(clientId string) (*types.Client, error) {
+	ci := &types.Client{}
 
 	value, err := gr.client.Get(gr.ctx, clientId).Bytes()
 
@@ -271,7 +271,7 @@ func (gr *Goredis) GetClient(clientId string) (*types.ClientInfoType, error) {
 	err = json.Unmarshal(value, ci)
 
 	if err != nil {
-		klog.Errorf("Error from JSON Unmarshal for VirtualNodeAssignment. error %v", err)
+		klog.Errorf("Error unmarshal client type. error %v", err)
 		return nil, err
 	}
 

@@ -58,12 +58,21 @@ func createNodeStore() *storage.NodeStore {
 	return storage.NewNodeStore(virutalStoreNumPerResourcePartition, location.GetRegionNum(), location.GetRPNum())
 }
 
-func (dis *ResourceDistributor) RegisterClient(requestedHostNum int) (string, bool, error) {
+// TODO: post 630, allocate resources per request for different type of hardware and regions
+func (dis *ResourceDistributor) RegisterClient(requestedHostNum int, quota types.ResourceQuota, clientInfo types.ClientInfoType) (string, bool, error) {
 	clientId := uuid.New().String()
 	result, err := dis.allocateNodesToClient(clientId, requestedHostNum)
 	if err != nil {
-		klog.Errorf("Error register client. Error %v\n", err)
+		klog.Errorf("Error allocate resource for client. Error %v\n", err)
+		return clientId, result, err
 	}
+
+	err = dis.persistHelper.PersistClient(clientId, &types.Client{ClientId:clientId, ClientInfo: clientInfo, Quota: quota})
+	if err != nil {
+		klog.Errorf("Error persistent client to store. Error %v\n", err)
+		return clientId, result, err
+	}
+
 	klog.Errorf("Registered client id: %s\n", clientId)
 	return clientId, result, err
 }

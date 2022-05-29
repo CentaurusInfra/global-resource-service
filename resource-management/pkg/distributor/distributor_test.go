@@ -243,14 +243,14 @@ func TestRegisterClient_ErrorCases(t *testing.T) {
 	assert.Equal(t, 10, distributor.defaultNodeStore.GetTotalHostNum())
 
 	// not enough hosts
-	clientId, result, err := distributor.RegisterClient(100)
+	clientId, result, err := distributor.RegisterClient(100, types.ResourceQuota{}, types.ClientInfoType{})
 	assert.False(t, result, "Expecting request fail due to not enough hosts")
 	assert.NotNil(t, clientId, "Expecting not nil client id")
 	assert.False(t, clientId == "", "Expecting non empty client id")
 	assert.Equal(t, types.Error_HostRequestExceedLimit, err)
 
 	// less than minimal request host number
-	clientId, result, err = distributor.RegisterClient(MinimalRequestHostNum - 1)
+	clientId, result, err = distributor.RegisterClient(MinimalRequestHostNum - 1, types.ResourceQuota{}, types.ClientInfoType{})
 	assert.False(t, result, "Expecting request fail due to less than minimal host request")
 	assert.NotNil(t, clientId, "Expecting not nil client id")
 	assert.False(t, clientId == "", "Expecting non empty client id")
@@ -269,7 +269,7 @@ func TestRegisterClient_WithinLimit(t *testing.T) {
 	requestedHostNum := 500
 	for i := 0; i < 10; i++ {
 		start := time.Now()
-		clientId, result, err := distributor.RegisterClient(requestedHostNum)
+		clientId, result, err := distributor.RegisterClient(requestedHostNum, types.ResourceQuota{}, types.ClientInfoType{})
 		duration := time.Since(start)
 
 		assert.True(t, result, "Expecting register client successfully")
@@ -319,7 +319,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 
 	// register client
 	requestedHostNum := 500
-	clientId, result, err := distributor.RegisterClient(requestedHostNum)
+	clientId, result, err := distributor.RegisterClient(requestedHostNum, types.ResourceQuota{}, types.ClientInfoType{})
 	assert.True(t, result, "Expecting register client successfully")
 	assert.NotNil(t, clientId, "Expecting not nil client id")
 	assert.False(t, clientId == "", "Expecting non empty client id")

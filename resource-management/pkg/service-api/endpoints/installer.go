@@ -62,7 +62,8 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 		return
 	}
 
-	clientId, _, err := i.dist.RegisterClient(clientReq.InitQuota.TotalMachines)
+	// TODO: need to design to avoid client to register itself
+	clientId, _, err := i.dist.RegisterClient(clientReq.InitQuota.TotalMachines, clientReq.InitQuota, clientReq.ClientInfo)
 
 	if err != nil {
 		klog.V(3).Infof("error register client. error %v", err)

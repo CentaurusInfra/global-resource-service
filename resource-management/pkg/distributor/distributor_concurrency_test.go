@@ -63,7 +63,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 			clientIds := make([]string, tt.clientNum)
 			for i := 0; i < tt.clientNum; i++ {
 				start = time.Now()
-				clientId, result, err := distributor.RegisterClient(tt.hostPerClient)
+				clientId, result, err := distributor.RegisterClient(tt.hostPerClient, types.ResourceQuota{}, types.ClientInfoType{})
 				duration += time.Since(start)
 
 				assert.True(t, result, "Expecting register client successfully")
@@ -243,7 +243,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 			start = time.Now()
 			for i := 0; i < tt.clientNum; i++ {
 				go func(done *sync.WaitGroup, hostPerClient int, clientIds []string, i int) {
-					clientId, result, err := distributor.RegisterClient(hostPerClient)
+					clientId, result, err := distributor.RegisterClient(hostPerClient, types.ResourceQuota{}, types.ClientInfoType{})
 					clientIds[i] = clientId
 					done.Done()
 
