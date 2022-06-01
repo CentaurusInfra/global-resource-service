@@ -15,8 +15,13 @@ type StoreInterface interface {
 	PersistNodeStoreStatus(*NodeStoreStatus) bool
 	PersistVirtualNodesAssignments(*VirtualNodeAssignment) bool
 
-	PersistClient(string,  *types.Client) error
+	// Interfaces for client object operations to store
+	PersistClient(string, *types.Client) error
 	GetClient(string) (*types.Client, error)
+	// Get all client object, during distributor restart, Admin UI etc
+	GetClients() ([]*types.Client, error)
+	// UpdateClient will be used with client Add/remove resources
+	UpdateClient(string, *types.Client) error
 }
 
 type NodeStoreStatus struct {

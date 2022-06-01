@@ -277,3 +277,11 @@ func (gr *Goredis) GetClient(clientId string) (*types.Client, error) {
 
 	return ci, nil
 }
+
+func (gr *Goredis) UpdateClient(clientId string, client *types.Client) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (gr *Goredis) GetClients() ([]*types.Client, error) {
+	return nil, fmt.Errorf("not implemented")
+}

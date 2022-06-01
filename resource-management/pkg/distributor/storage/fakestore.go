@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"k8s.io/klog/v2"
 	"time"
 
@@ -47,4 +48,12 @@ func (fs *FakeStorageInterface) PersistClient(clientId string, client *types.Cli
 
 func (fs *FakeStorageInterface) GetClient(clientId string) (*types.Client, error) {
 	return nil, errors.New("not implemented")
+}
+
+func (fs *FakeStorageInterface) UpdateClient(clientId string, client *types.Client) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (fs *FakeStorageInterface) GetClients() ([]*types.Client, error) {
+	return nil, fmt.Errorf("not implemented")
 }
