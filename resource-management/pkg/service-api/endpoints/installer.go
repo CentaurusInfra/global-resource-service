@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"net/http"
@@ -28,7 +29,7 @@ func (i *Installer) ClientAdministrationHandler(resp http.ResponseWriter, req *h
 		i.handleClientRegistration(resp, req)
 		return
 	case http.MethodDelete:
-        i.handleClientUnRegistration(resp, req)
+		i.handleClientUnRegistration(resp, req)
 		return
 	default:
 		resp.WriteHeader(http.StatusMethodNotAllowed)
@@ -39,7 +40,7 @@ func (i *Installer) ClientAdministrationHandler(resp http.ResponseWriter, req *h
 
 // TODO: error handling function
 func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http.Request) {
-	body, err  := ioutil.ReadAll(req.Body)
+	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		klog.V(3).Infof("error read request. error %v", err)
 		resp.WriteHeader(http.StatusBadRequest)
@@ -63,7 +64,9 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 	}
 
 	// TODO: need to design to avoid client to register itself
-	clientId, _, err := i.dist.RegisterClient(clientReq.InitQuota.TotalMachines, clientReq.InitQuota, clientReq.ClientInfo)
+	client := types.Client{ClientId: uuid.New().String(), Quota: clientReq.InitQuota, ClientInfo: clientReq.ClientInfo}
+
+	err = i.dist.RegisterClient(&client)
 
 	if err != nil {
 		klog.V(3).Infof("error register client. error %v", err)
@@ -71,7 +74,8 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 		return
 	}
 
-	ret := apiTypes.ClientRegistrationResponse{ClientId: clientId,  GrantedQuota: types.ResourceQuota{}}
+	// for 630, request of initial quota with client registration is either denied or granted in full
+	ret := apiTypes.ClientRegistrationResponse{ClientId: client.ClientId, GrantedQuota: client.Quota}
 
 	b, err := json.Marshal(ret)
 	if err != nil {
