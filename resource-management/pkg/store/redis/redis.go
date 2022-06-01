@@ -235,7 +235,7 @@ func (gr *Goredis) GetVirtualNodesAssignments() *store.VirtualNodeAssignment {
 	return virtualNodeAssignment
 }
 
-func (gr *Goredis) PersistClient (clientId string, client *types.Client) error {
+func (gr *Goredis) PersistClient(clientId string, client *types.Client) error {
 	ci, err := json.Marshal(client)
 
 	if err != nil {
