@@ -65,7 +65,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 			for i := 0; i < tt.clientNum; i++ {
 				start = time.Now()
 
-				client := types.Client{ClientId: uuid.New().String(), Quota: types.ResourceQuota{TotalMachines: tt.hostPerClient}, ClientInfo: types.ClientInfoType{}}
+				client := types.Client{ClientId: uuid.New().String(), Resource: types.ResourceRequest{TotalMachines: tt.hostPerClient}, ClientInfo: types.ClientInfoType{}}
 				err := distributor.RegisterClient(&client)
 				duration += time.Since(start)
 				clientId := client.ClientId
@@ -247,7 +247,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 			start = time.Now()
 			for i := 0; i < tt.clientNum; i++ {
 				go func(done *sync.WaitGroup, hostPerClient int, clientIds []string, i int) {
-					client := types.Client{ClientId: uuid.New().String(), Quota: types.ResourceQuota{TotalMachines: hostPerClient}, ClientInfo: types.ClientInfoType{}}
+					client := types.Client{ClientId: uuid.New().String(), Resource: types.ResourceRequest{TotalMachines: hostPerClient}, ClientInfo: types.ClientInfoType{}}
 					err := distributor.RegisterClient(&client)
 					clientId := client.ClientId
 					clientIds[i] = clientId

@@ -56,7 +56,7 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 		return
 	}
 
-	requestedMachines := clientReq.InitQuota.TotalMachines
+	requestedMachines := clientReq.InitialRequestedResource.TotalMachines
 	if requestedMachines > types.MaxTotalMachinesPerRequest || requestedMachines < types.MinTotalMachinesPerRequest {
 		klog.V(3).Infof("Invalid request of resources. requested total machines: %v", requestedMachines)
 		resp.WriteHeader(http.StatusBadRequest)
@@ -64,7 +64,7 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 	}
 
 	// TODO: need to design to avoid client to register itself
-	client := types.Client{ClientId: uuid.New().String(), Quota: clientReq.InitQuota, ClientInfo: clientReq.ClientInfo}
+	client := types.Client{ClientId: uuid.New().String(), Resource: clientReq.InitialRequestedResource, ClientInfo: clientReq.ClientInfo}
 
 	err = i.dist.RegisterClient(&client)
 
@@ -74,8 +74,8 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 		return
 	}
 
-	// for 630, request of initial quota with client registration is either denied or granted in full
-	ret := apiTypes.ClientRegistrationResponse{ClientId: client.ClientId, GrantedQuota: client.Quota}
+	// for 630, request of initial resource request with client registration is either denied or granted in full
+	ret := apiTypes.ClientRegistrationResponse{ClientId: client.ClientId, GrantedResource: client.Resource}
 
 	b, err := json.Marshal(ret)
 	if err != nil {
@@ -100,7 +100,6 @@ func (i *Installer) handleClientUnRegistration(resp http.ResponseWriter, req *ht
 	return
 }
 
-// TODO: post 630, after the full quota based request support, ListNodesForClient will need some basic quota check
 func (i *Installer) ResourceHandler(resp http.ResponseWriter, req *http.Request) {
 	klog.V(3).Infof("handle /resource. URL path: %s", req.URL.Path)
 

@@ -242,7 +242,7 @@ func TestRegisterClient_ErrorCases(t *testing.T) {
 	assert.NotNil(t, rvMap)
 	assert.Equal(t, 10, distributor.defaultNodeStore.GetTotalHostNum())
 
-	client := types.Client{ClientId: uuid.New().String(), Quota: types.ResourceQuota{TotalMachines: 100}, ClientInfo: types.ClientInfoType{}}
+	client := types.Client{ClientId: uuid.New().String(), Resource: types.ResourceRequest{TotalMachines: 100}, ClientInfo: types.ClientInfoType{}}
 	// not enough hosts
 	err := distributor.RegisterClient(&client)
 	clientId := client.ClientId
@@ -251,7 +251,7 @@ func TestRegisterClient_ErrorCases(t *testing.T) {
 	assert.Equal(t, types.Error_HostRequestExceedLimit, err)
 
 	// less than minimal request host number
-	client = types.Client{ClientId: uuid.New().String(), Quota: types.ResourceQuota{TotalMachines: MinimalRequestHostNum - 1}, ClientInfo: types.ClientInfoType{}}
+	client = types.Client{ClientId: uuid.New().String(), Resource: types.ResourceRequest{TotalMachines: MinimalRequestHostNum - 1}, ClientInfo: types.ClientInfoType{}}
 	err = distributor.RegisterClient(&client)
 	clientId = client.ClientId
 	assert.NotNil(t, clientId, "Expecting not nil client id")
@@ -271,7 +271,7 @@ func TestRegisterClient_WithinLimit(t *testing.T) {
 	requestedHostNum := 500
 	for i := 0; i < 10; i++ {
 		start := time.Now()
-		client := types.Client{ClientId: uuid.New().String(), Quota: types.ResourceQuota{TotalMachines: requestedHostNum}, ClientInfo: types.ClientInfoType{}}
+		client := types.Client{ClientId: uuid.New().String(), Resource: types.ResourceRequest{TotalMachines: requestedHostNum}, ClientInfo: types.ClientInfoType{}}
 		err := distributor.RegisterClient(&client)
 		duration := time.Since(start)
 
@@ -323,7 +323,7 @@ func TestRegistrationWorkflow(t *testing.T) {
 	// register client
 	requestedHostNum := 500
 
-	client := types.Client{ClientId: uuid.New().String(), Quota: types.ResourceQuota{TotalMachines: requestedHostNum}, ClientInfo: types.ClientInfoType{}}
+	client := types.Client{ClientId: uuid.New().String(), Resource: types.ResourceRequest{TotalMachines: requestedHostNum}, ClientInfo: types.ClientInfoType{}}
 	err := distributor.RegisterClient(&client)
 	clientId := client.ClientId
 	assert.NotNil(t, clientId, "Expecting not nil client id")

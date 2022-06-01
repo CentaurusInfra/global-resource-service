@@ -60,7 +60,7 @@ func createNodeStore() *storage.NodeStore {
 // TODO: post 630, allocate resources per request for different type of hardware and regions
 func (dis *ResourceDistributor) RegisterClient(client *types.Client) error {
 	clientId := client.ClientId
-	_, err := dis.allocateNodesToClient(clientId, client.Quota.TotalMachines)
+	_, err := dis.allocateNodesToClient(clientId, client.Resource.TotalMachines)
 	if err != nil {
 		klog.Errorf("Error allocate resource for client. Error %v\n", err)
 		return err
