@@ -8,6 +8,7 @@ import (
 const (
 	Preserve_VirtualNodesAssignments_KeyPrefix = "VirtualNodesAssignments"
 	Preserve_NodeStoreStatus_KeyPrefix         = "NodeStoreStatus"
+	Preserve_Client_KeyPrefix = "Client"
 )
 
 type StoreInterface interface {

@@ -2,12 +2,14 @@ package endpoints
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"net/http"
 
 	di "global-resource-service/resource-management/pkg/common-lib/interfaces/distributor"
+	store "global-resource-service/resource-management/pkg/common-lib/interfaces/store"
 	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/event"
 	apiTypes "global-resource-service/resource-management/pkg/service-api/types"
@@ -64,7 +66,8 @@ func (i *Installer) handleClientRegistration(resp http.ResponseWriter, req *http
 	}
 
 	// TODO: need to design to avoid client to register itself
-	client := types.Client{ClientId: uuid.New().String(), Resource: clientReq.InitialRequestedResource, ClientInfo: clientReq.ClientInfo}
+	c_id := fmt.Sprintf("%s-%s", store.Preserve_Client_KeyPrefix, uuid.New().String())
+	client := types.Client{ClientId: c_id, Resource: clientReq.InitialRequestedResource, ClientInfo: clientReq.ClientInfo}
 
 	err = i.dist.RegisterClient(&client)
 
