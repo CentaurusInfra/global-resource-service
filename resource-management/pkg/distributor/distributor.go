@@ -170,6 +170,8 @@ func (dis *ResourceDistributor) getSortedVirtualStores(stores map[*storage.Virtu
 	return sortedStores
 }
 
+// ListNodesForClient returns list of nodes for a client request and a RV map to the client for WATCH
+//                            or error encountered during the node allocation/listing for the client
 func (dis *ResourceDistributor) ListNodesForClient(clientId string) ([]*types.LogicalNode, types.ResourceVersionMap, error) {
 	if clientId == "" {
 		return nil, nil, errors.New("Empty clientId")
@@ -239,7 +241,9 @@ func (dis *ResourceDistributor) Watch(clientId string, rvs types.ResourceVersion
 		return errors.New("Stop watch channel not provided")
 	}
 
-	return nodeEventQueue.Watch(rvs, watchChan, stopCh)
+	internal_rvs := types.ConvertToInternalResourceVersionMap(rvs)
+
+	return nodeEventQueue.Watch(internal_rvs, watchChan, stopCh)
 }
 
 func (dis *ResourceDistributor) ProcessEvents(events []*event.NodeEvent) (bool, types.ResourceVersionMap) {
