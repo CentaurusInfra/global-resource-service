@@ -77,12 +77,13 @@ func (vs *VirtualNodeStore) SnapShot() ([]*types.LogicalNode, types.TransitResou
 	for _, node := range vs.nodeEventByHash {
 		nodesCopy[index] = node.CopyNode()
 		newRV := node.GetResourceVersion()
-		if lastRV, isOK := rvs[*node.GetRvLocation()]; isOK {
+		rvLoc := *node.GetRvLocation()
+		if lastRV, isOK := rvs[rvLoc]; isOK {
 			if lastRV < newRV {
-				rvs[*node.GetRvLocation()] = newRV
+				rvs[rvLoc] = newRV
 			}
 		} else {
-			rvs[*node.GetRvLocation()] = newRV
+			rvs[rvLoc] = newRV
 		}
 		index++
 	}
@@ -164,7 +165,7 @@ func (ns *NodeStore) GetCurrentResourceVersions() types.TransitResourceVersionMa
 	for i := 0; i < ns.regionNum; i++ {
 		for j := 0; j < ns.partitionMaxNum; j++ {
 			if ns.currentRVs[i][j] > 0 {
-				rvMap[types.RvLocation{Region:location.Regions[i], Partition: location.ResourcePartitions[j]}] = ns.currentRVs[i][j]
+				rvMap[types.RvLocation{Region: location.Regions[i], Partition: location.ResourcePartitions[j]}] = ns.currentRVs[i][j]
 			}
 		}
 	}
