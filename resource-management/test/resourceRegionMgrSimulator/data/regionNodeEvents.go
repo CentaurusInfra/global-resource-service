@@ -82,7 +82,7 @@ func GetRegionNodeAddedEvents(batchLength uint64) (simulatorTypes.RegionNodeEven
 // Return region node modified events with CRVs in BATCH LENGTH from all RPs
 // TO DO: paginate support
 //
-func GetRegionNodeModifiedEventsCRV(rvs types.ResourceVersionMap) (simulatorTypes.RegionNodeEvents, uint64) {
+func GetRegionNodeModifiedEventsCRV(rvs types.TransitResourceVersionMap) (simulatorTypes.RegionNodeEvents, uint64) {
 	snapshotNodeListEvents = RegionNodeEventsList
 	pulledNodeListEvents := make(simulatorTypes.RegionNodeEvents, RpNum)
 

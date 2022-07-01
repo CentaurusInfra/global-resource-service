@@ -78,7 +78,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 			}
 
 			// client list nodes
-			latestRVsByClient := make([]types.ResourceVersionMap, tt.clientNum)
+			latestRVsByClient := make([]types.TransitResourceVersionMap, tt.clientNum)
 			nodesByClient := make([][]*types.LogicalNode, tt.clientNum)
 			for i := 0; i < tt.clientNum; i++ {
 				clientId := clientIds[i]
@@ -262,7 +262,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 			duration += time.Since(start)
 
 			// client list nodes
-			latestRVsByClient := make([]types.ResourceVersionMap, tt.clientNum)
+			latestRVsByClient := make([]types.TransitResourceVersionMap, tt.clientNum)
 			nodesByClient := make([][]*types.LogicalNode, tt.clientNum)
 			wg.Add(tt.clientNum)
 

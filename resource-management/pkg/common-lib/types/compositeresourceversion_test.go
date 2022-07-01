@@ -8,7 +8,7 @@ import (
 )
 
 func TestResourceVersionMap_Marshall_UnMarshall(t *testing.T) {
-	rvs := make(ResourceVersionMap)
+	rvs := make(TransitResourceVersionMap)
 	loc := RvLocation{Region: location.Beijing, Partition: location.ResourcePartition1}
 	rvs[loc] = 100
 
@@ -18,7 +18,7 @@ func TestResourceVersionMap_Marshall_UnMarshall(t *testing.T) {
 	assert.NotNil(t, b)
 
 	// unmarshall
-	var newRVMap ResourceVersionMap
+	var newRVMap TransitResourceVersionMap
 	err = json.Unmarshal(b, &newRVMap)
 	assert.Nil(t, err)
 	assert.NotNil(t, newRVMap)
