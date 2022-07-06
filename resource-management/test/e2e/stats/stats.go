@@ -8,7 +8,11 @@ import (
 	"global-resource-service/resource-management/pkg/common-lib/types"
 )
 
-const LongWatchThreshold = time.Duration(1000 * time.Millisecond)
+const (
+	LongWatchThreshold = time.Duration(1000 * time.Millisecond)
+	RegionMapInitCap   = 10
+	RpMapInitCap       = 20
+)
 
 type RegisterClientStats struct {
 	RegisterClientDuration time.Duration
@@ -71,7 +75,7 @@ func GroupByRegionByRP(nodes []*types.LogicalNode) {
 			}
 		} else {
 			if groupByRegion[n.GeoInfo.Region] == nil {
-				groupByRegion[n.GeoInfo.Region] = make(groupByRp, 20)
+				groupByRegion[n.GeoInfo.Region] = make(groupByRp, RpMapInitCap)
 			}
 			groupByRegion[n.GeoInfo.Region][n.GeoInfo.ResourcePartition] = 1
 		}
@@ -89,7 +93,7 @@ func GroupByRegionByRP(nodes []*types.LogicalNode) {
 }
 
 func GroupByRegion(nodes []*types.LogicalNode) {
-	groupByRegion := make(map[types.RegionName]int, 20)
+	groupByRegion := make(map[types.RegionName]int, RegionMapInitCap)
 
 	for _, n := range nodes {
 		if _, found := groupByRegion[n.GeoInfo.Region]; found {
