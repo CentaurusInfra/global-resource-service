@@ -143,6 +143,9 @@ func listNodes(client rmsclient.RmsInterface, clientId string, store cache.Store
 	klog.V(3).Infof("Got [%v] nodes from service", len(nodeList))
 	klog.V(3).Infof("Got [%v] resource versions service", crv)
 
+	stats.GroupByRegion(nodeList)
+	stats.GroupByRegionByRP(nodeList)
+
 	for _, node := range nodeList {
 		store.Add(*node)
 	}
