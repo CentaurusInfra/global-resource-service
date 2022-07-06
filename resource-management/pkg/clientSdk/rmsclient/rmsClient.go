@@ -59,7 +59,7 @@ type rmsClient struct {
 	Id string
 }
 
-// NewRmsClient returns a Nodes
+// NewRmsClient returns a refence to the rsmClient object
 func NewRmsClient(cfg Config) *rmsClient {
 	httpclient := http.Client{Timeout: cfg.RequestTimeout}
 	url, err := rest.DefaultServerURL(cfg.ServiceUrl, "", false)
@@ -99,6 +99,7 @@ func (c *rmsClient) Register() (*apiTypes.ClientRegistrationResponse, error) {
 		return nil, err
 	}
 
+	// construct the request oject
 	req = req.Body(body)
 	req = req.Resource("clients")
 	req = req.Timeout(c.config.RequestTimeout)

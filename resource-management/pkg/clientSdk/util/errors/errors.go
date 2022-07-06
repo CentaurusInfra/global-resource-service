@@ -32,10 +32,4 @@ func NewClientErrorReporter(code int, verb string, reason string) *ErrorReporter
 //
 func (r *ErrorReporter) AsObject(err error) *types.LogicalNode {
 	return &types.LogicalNode{}
-	//reason := r.reason
-	//if len(reason) == 0 {
-	//	reason = "ClientError"
-	//}
-	//
-	//fmt.Errorf("error code %v, verb %v, reason %v, error: %v", r.code, r.verb, r.reason, err.Error())
 }
