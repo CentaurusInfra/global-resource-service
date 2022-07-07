@@ -17,6 +17,15 @@ func Test_GetLatencyReport(t *testing.T) {
 		p99   int
 	}{
 		{
+			name:  "Test 1, start 1",
+			start: 1,
+			gap:   1,
+			count: 1,
+			p50:   1,
+			p90:   1,
+			p99:   1,
+		},
+		{
 			name:  "Test 1-100, start 1",
 			start: 1,
 			gap:   1,
@@ -30,7 +39,7 @@ func Test_GetLatencyReport(t *testing.T) {
 			start: 1,
 			gap:   1,
 			count: 99,
-			p50:   49,
+			p50:   50,
 			p90:   90,
 			p99:   99,
 		},
@@ -74,10 +83,11 @@ func Test_GetLatencyReport(t *testing.T) {
 			}
 
 			report := latency.GetSummary()
-			t.Logf("Test [%s], p50 %v, p90 %v, p99 %v", tt.name, report.P50, report.P90, report.P99)
+			t.Logf("Test [%s], p50 %v, p90 %v, p99 %v, count %v", tt.name, report.P50, report.P90, report.P99, report.TotalCount)
 			assert.Equal(t, time.Duration(tt.p50)*time.Millisecond, report.P50)
 			assert.Equal(t, time.Duration(tt.p90)*time.Millisecond, report.P90)
 			assert.Equal(t, time.Duration(tt.p99)*time.Millisecond, report.P99)
+			assert.Equal(t, tt.count, report.TotalCount)
 		})
 	}
 }

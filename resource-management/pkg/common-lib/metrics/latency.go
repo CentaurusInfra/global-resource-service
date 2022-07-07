@@ -1,14 +1,16 @@
 package metrics
 
 import (
+	"math"
 	"sort"
 	"time"
 )
 
 type LatencyReport struct {
-	P50 time.Duration
-	P90 time.Duration
-	P99 time.Duration
+	TotalCount int
+	P50        time.Duration
+	P90        time.Duration
+	P99        time.Duration
 }
 
 type LatencyMetrics struct {
@@ -43,9 +45,18 @@ func (m *LatencyMetrics) GetSummary() *LatencyReport {
 	// sort
 	sort.Sort(m)
 	count := len(m.latencies)
+	if count == 0 {
+		return &LatencyReport{
+			TotalCount: count,
+			P50:        0,
+			P90:        0,
+			P99:        0,
+		}
+	}
 	return &LatencyReport{
-		P50: m.latencies[count/2-1],
-		P90: m.latencies[count-count/10-1],
-		P99: m.latencies[count-count/100-1],
+		TotalCount: count,
+		P50:        m.latencies[int(math.Ceil(float64(count*50)/100))-1],
+		P90:        m.latencies[int(math.Ceil(float64(count*90)/100))-1],
+		P99:        m.latencies[int(math.Ceil(float64(count*99)/100))-1],
 	}
 }
