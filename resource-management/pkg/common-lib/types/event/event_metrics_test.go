@@ -23,6 +23,7 @@ func Test_PrintLatencyReport(t *testing.T) {
 	ne.SetCheckpoint(metrics.Distributor_Received)
 	ne.SetCheckpoint(metrics.Distributor_Sending)
 	ne.SetCheckpoint(metrics.Distributor_Sent)
+	ne.SetCheckpoint(metrics.Serializer_Encoded)
 	ne.SetCheckpoint(metrics.Serializer_Sent)
 	AddLatencyMetricsAllCheckpoints(ne)
 	PrintLatencyReport()

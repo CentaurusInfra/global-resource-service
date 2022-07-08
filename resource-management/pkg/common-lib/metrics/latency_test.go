@@ -70,6 +70,15 @@ func Test_GetLatencyReport(t *testing.T) {
 			p90:   9000000,
 			p99:   9900000,
 		},
+		{
+			name:  "Test 10M-1, start 10M",
+			start: 10000000,
+			gap:   -1,
+			count: 10000000,
+			p50:   5000000,
+			p90:   9000000,
+			p99:   9900000,
+		},
 	}
 
 	for _, tt := range testCases {

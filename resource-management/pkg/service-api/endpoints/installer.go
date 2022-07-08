@@ -227,6 +227,7 @@ func (i *Installer) serverWatch(resp http.ResponseWriter, req *http.Request, cli
 				resp.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			record.SetCheckpoint(metrics.Serializer_Encoded)
 			if len(watchCh) == 0 {
 				flusher.Flush()
 			}
