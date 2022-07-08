@@ -16,7 +16,7 @@ type LatencyMetricsAllCheckpoints struct {
 }
 
 var latencyMetricsAllCheckpoints *LatencyMetricsAllCheckpoints
-var latencyMetricsLock sync.Mutex
+var latencyMetricsLock sync.RWMutex
 
 func init() {
 	latencyMetricsAllCheckpoints = new(LatencyMetricsAllCheckpoints)
@@ -73,14 +73,14 @@ func AddLatencyMetricsAllCheckpoints(e *NodeEvent) {
 }
 
 func PrintLatencyReport() {
-	latencyMetricsLock.Lock()
+	latencyMetricsLock.RLock()
 	agg_received_summary := latencyMetricsAllCheckpoints.Aggregator_Received.GetSummary()
 	dis_received_summary := latencyMetricsAllCheckpoints.Distributor_Received.GetSummary()
 	dis_sending_summary := latencyMetricsAllCheckpoints.Distributor_Sending.GetSummary()
 	dis_sent_summary := latencyMetricsAllCheckpoints.Distributor_Sent.GetSummary()
 	serializer_sent_summary := latencyMetricsAllCheckpoints.Serializer_Sent.GetSummary()
 
-	latencyMetricsLock.Unlock()
+	latencyMetricsLock.RUnlock()
 	metrics_Message := "[Metrics][%s] perc50 %v, perc90 %v, perc99 %v. Total count %v"
 	klog.Infof(metrics_Message, metrics.Aggregator_Received, agg_received_summary.P50, agg_received_summary.P90, agg_received_summary.P99, agg_received_summary.TotalCount)
 	klog.Infof(metrics_Message, metrics.Distributor_Received, dis_received_summary.P50, dis_received_summary.P90, dis_received_summary.P99, dis_received_summary.TotalCount)
