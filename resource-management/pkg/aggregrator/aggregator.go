@@ -86,7 +86,6 @@ func (a *Aggregator) Run() (err error) {
 
 			klog.V(3).Infof("Starting loop pulling nodes from region: %v", a.urls[i])
 			for {
-				klog.V(9).Infof("Wait for 100 milisecond...")
 				time.Sleep(100 * time.Millisecond)
 
 				// Call the Pull methods
@@ -149,8 +148,6 @@ func (a *Aggregator) initPullOrSubsequentPull(c *ClientOfRRM, batchLength uint64
 		path = httpPrefix + c.BaseURL + "/resources/subsequentpull"
 	}
 
-	klog.V(9).Infof("CRV : (%v)", crv)
-
 	bytes, _ := json.Marshal(PullDataFromRRM{BatchLength: batchLength, CRV: crv.Copy()})
 	req, err := http.NewRequest(http.MethodGet, path, strings.NewReader((string(bytes))))
 	if err != nil {
@@ -182,6 +179,7 @@ func (a *Aggregator) initPullOrSubsequentPull(c *ClientOfRRM, batchLength uint64
 		for i := 0; i < len(ResponseObject.RegionNodeEvents); i++ {
 			for j := 0; j < len(ResponseObject.RegionNodeEvents[i]); j++ {
 				if ResponseObject.RegionNodeEvents[i][j] != nil {
+					ResponseObject.RegionNodeEvents[i][j].CreatCheckPointsMap()
 					ResponseObject.RegionNodeEvents[i][j].SetCheckpoint(metrics.Aggregator_Received)
 				}
 			}
