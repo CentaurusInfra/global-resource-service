@@ -33,7 +33,7 @@ func NewNodeEvent(node *types.LogicalNode, eventType EventType) *NodeEvent {
 	}
 }
 
-func (e *NodeEvent) CreatCheckPointsMap() {
+func (e *NodeEvent) CreateCheckPointsMap() {
 	if e.checkpoints == nil {
 		e.checkpoints = make(map[metrics.ResourceManagementCheckpoint]time.Time, 5)
 	}
