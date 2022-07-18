@@ -232,9 +232,7 @@ func (i *Installer) serverWatch(resp http.ResponseWriter, req *http.Request, cli
 				flusher.Flush()
 			}
 			record.SetCheckpoint(metrics.Serializer_Sent)
-			if metrics.ResourceManagementMeasurement_Enabled {
-				event.AddLatencyMetricsAllCheckpoints(record)
-			}
+			event.AddLatencyMetricsAllCheckpoints(record)
 		}
 	}
 }

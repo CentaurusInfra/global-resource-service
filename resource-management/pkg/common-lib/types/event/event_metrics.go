@@ -20,6 +20,9 @@ var latencyMetricsAllCheckpoints *LatencyMetricsAllCheckpoints
 var latencyMetricsLock sync.RWMutex
 
 func init() {
+	if !metrics.ResourceManagementMeasurement_Enabled {
+		return
+	}
 	latencyMetricsAllCheckpoints = new(LatencyMetricsAllCheckpoints)
 	latencyMetricsAllCheckpoints.Aggregator_Received = metrics.NewLatencyMetrics(string(metrics.Aggregator_Received))
 	latencyMetricsAllCheckpoints.Distributor_Received = metrics.NewLatencyMetrics(string(metrics.Distributor_Received))
@@ -30,6 +33,9 @@ func init() {
 }
 
 func AddLatencyMetricsAllCheckpoints(e *NodeEvent) {
+	if !metrics.ResourceManagementMeasurement_Enabled {
+		return
+	}
 	if e == nil {
 		klog.Error("Nil event")
 	}
