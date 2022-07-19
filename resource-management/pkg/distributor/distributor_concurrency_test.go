@@ -97,7 +97,7 @@ func TestSingleRPMutipleClients_Workflow(t *testing.T) {
 				// check each node event
 				nodeIds := make(map[string]bool)
 				for _, node := range nodes {
-					nodeLoc := types.RvLocation{Region: location.Region(node.GeoInfo.Region), Partition: location.ResourcePartition (node.GeoInfo.ResourcePartition)}
+					nodeLoc := types.RvLocation{Region: location.Region(node.GeoInfo.Region), Partition: location.ResourcePartition(node.GeoInfo.ResourcePartition)}
 					assert.NotNil(t, nodeLoc)
 					assert.True(t, latestRVs[nodeLoc] >= node.GetResourceVersionInt64())
 					if _, isOK := nodeIds[node.Id]; isOK {
@@ -282,7 +282,7 @@ func TestMultipleRPsMutipleClients_Workflow(t *testing.T) {
 					// check each node event
 					nodeIds := make(map[string]bool)
 					for _, node := range nodes {
-						nodeLoc := types.RvLocation{Region: location.Region(node.GeoInfo.Region), Partition: location.ResourcePartition (node.GeoInfo.ResourcePartition)}
+						nodeLoc := types.RvLocation{Region: location.Region(node.GeoInfo.Region), Partition: location.ResourcePartition(node.GeoInfo.ResourcePartition)}
 						assert.NotNil(t, nodeLoc)
 						assert.True(t, latestRVs[nodeLoc] >= node.GetResourceVersionInt64())
 						if _, isOK := nodeIds[node.Id]; isOK {
@@ -424,6 +424,7 @@ func TestProcessEvents_TwoRPs_AddNodes_Sequential(t *testing.T) {
 	distributor := setUp()
 	defer tearDown()
 
+	//metrics.ResourceManagementMeasurement_Enabled = false
 	nodeCounts := []int{10, 100, 1000, 10000, 100000, 1000000}
 	// generate add node events
 	for i := 0; i < len(nodeCounts); i++ {
