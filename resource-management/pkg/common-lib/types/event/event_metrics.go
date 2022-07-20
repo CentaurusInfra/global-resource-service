@@ -84,6 +84,14 @@ func AddLatencyMetricsAllCheckpoints(e *NodeEvent) {
 	} else {
 		klog.Errorf("Event (%v, Id %s, RV %s) does not have %s stamped", e.Type, e.Node.Id, e.Node.ResourceVersion, metrics.Serializer_Sent)
 	}
+	klog.V(4).Infof("[Metrics][Detail] node %v RV %s: AGG_RECEIVED: %v, DIS_RECEIVED: %v, DIS_SENDING: %v, DIS_SENT: %v, SER_ENCODED: %v, SER_SENT: %v",
+		e.Node.Id, e.Node.ResourceVersion,
+		agg_received_time.Sub(lastUpdatedTime),
+		dis_received_time.Sub(lastUpdatedTime),
+		dis_sending_time.Sub(lastUpdatedTime),
+		dis_sent_time.Sub(lastUpdatedTime),
+		serializer_encoded_time.Sub(lastUpdatedTime),
+		serializer_sent_time.Sub(lastUpdatedTime))
 }
 
 func PrintLatencyReport() {
