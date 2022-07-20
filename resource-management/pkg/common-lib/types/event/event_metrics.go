@@ -84,14 +84,14 @@ func AddLatencyMetricsAllCheckpoints(e *NodeEvent) {
 	} else {
 		klog.Errorf("Event (%v, Id %s, RV %s) does not have %s stamped", e.Type, e.Node.Id, e.Node.ResourceVersion, metrics.Serializer_Sent)
 	}
-	klog.V(4).Infof("[Metrics][Detail] node %v RV %s: AGG_RECEIVED: %v, DIS_RECEIVED: %v, DIS_SENDING: %v, DIS_SENT: %v, SER_ENCODED: %v, SER_SENT: %v",
+	klog.V(4).Infof("[Metrics][Detail] node %v RV %s: %s: %v, %s: %v, %s: %v, %s: %v, %s: %v, %s: %v",
 		e.Node.Id, e.Node.ResourceVersion,
-		agg_received_time.Sub(lastUpdatedTime),
-		dis_received_time.Sub(lastUpdatedTime),
-		dis_sending_time.Sub(lastUpdatedTime),
-		dis_sent_time.Sub(lastUpdatedTime),
-		serializer_encoded_time.Sub(lastUpdatedTime),
-		serializer_sent_time.Sub(lastUpdatedTime))
+		metrics.Aggregator_Received_Name, agg_received_time.Sub(lastUpdatedTime),
+		metrics.Distributor_Received_Name, dis_received_time.Sub(lastUpdatedTime),
+		metrics.Distributor_Sending_Name, dis_sending_time.Sub(lastUpdatedTime),
+		metrics.Distributor_Sent_Name, dis_sent_time.Sub(lastUpdatedTime),
+		metrics.Serializer_Encoded_Name, serializer_encoded_time.Sub(lastUpdatedTime),
+		metrics.Serializer_Sent_Name, serializer_sent_time.Sub(lastUpdatedTime))
 }
 
 func PrintLatencyReport() {
@@ -105,10 +105,10 @@ func PrintLatencyReport() {
 
 	latencyMetricsLock.RUnlock()
 	metrics_Message := "[Metrics][%s] perc50 %v, perc90 %v, perc99 %v. Total count %v"
-	klog.Infof(metrics_Message, "AGG_RECEIVED", agg_received_summary.P50, agg_received_summary.P90, agg_received_summary.P99, agg_received_summary.TotalCount)
-	klog.Infof(metrics_Message, "DIS_RECEIVED", dis_received_summary.P50, dis_received_summary.P90, dis_received_summary.P99, dis_received_summary.TotalCount)
-	klog.Infof(metrics_Message, "DIS_SENDING", dis_sending_summary.P50, dis_sending_summary.P90, dis_sending_summary.P99, dis_sending_summary.TotalCount)
-	klog.Infof(metrics_Message, "DIS_SENT", dis_sent_summary.P50, dis_sent_summary.P90, dis_sent_summary.P99, dis_sent_summary.TotalCount)
-	klog.Infof(metrics_Message, "SER_ENCODED", serializer_encoded_summary.P50, serializer_encoded_summary.P90, serializer_encoded_summary.P99, serializer_encoded_summary.TotalCount)
-	klog.Infof(metrics_Message, "SER_SENT", serializer_sent_summary.P50, serializer_sent_summary.P90, serializer_sent_summary.P99, serializer_sent_summary.TotalCount)
+	klog.Infof(metrics_Message, metrics.Aggregator_Received_Name, agg_received_summary.P50, agg_received_summary.P90, agg_received_summary.P99, agg_received_summary.TotalCount)
+	klog.Infof(metrics_Message, metrics.Distributor_Received_Name, dis_received_summary.P50, dis_received_summary.P90, dis_received_summary.P99, dis_received_summary.TotalCount)
+	klog.Infof(metrics_Message, metrics.Distributor_Sending_Name, dis_sending_summary.P50, dis_sending_summary.P90, dis_sending_summary.P99, dis_sending_summary.TotalCount)
+	klog.Infof(metrics_Message, metrics.Distributor_Sent_Name, dis_sent_summary.P50, dis_sent_summary.P90, dis_sent_summary.P99, dis_sent_summary.TotalCount)
+	klog.Infof(metrics_Message, metrics.Serializer_Encoded_Name, serializer_encoded_summary.P50, serializer_encoded_summary.P90, serializer_encoded_summary.P99, serializer_encoded_summary.TotalCount)
+	klog.Infof(metrics_Message, metrics.Serializer_Sent_Name, serializer_sent_summary.P50, serializer_sent_summary.P90, serializer_sent_summary.P99, serializer_sent_summary.TotalCount)
 }

@@ -15,6 +15,19 @@ const (
 	Len_ResourceManagementCheckpoint = 6
 )
 
+type ResourceManagementCheckpointName string
+
+const (
+	Aggregator_Received_Name ResourceManagementCheckpointName = "AGG_RECEIVED"
+
+	Distributor_Received_Name ResourceManagementCheckpointName = "DIS_RECEIVED"
+	Distributor_Sending_Name  ResourceManagementCheckpointName = "DIS_SENDING"
+	Distributor_Sent_Name     ResourceManagementCheckpointName = "DIS_SENT"
+
+	Serializer_Encoded_Name ResourceManagementCheckpointName = "SER_ENCODED"
+	Serializer_Sent_Name    ResourceManagementCheckpointName = "SER_SENT"
+)
+
 var ResourceManagementMeasurement_Enabled = true
 
 func SetEnableResourceManagementMeasurement(enabled bool) {
