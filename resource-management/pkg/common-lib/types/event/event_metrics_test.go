@@ -2,6 +2,7 @@ package event
 
 import (
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"runtime"
 	"strconv"
 	"testing"
@@ -16,16 +17,25 @@ var defaultLocBeijing_RP1 = location.NewLocation(location.Beijing, location.Reso
 var rvToGenerate = 0
 
 func Test_PrintLatencyReport(t *testing.T) {
-	ne := createNodeEvent()
+	for i := 0; i < 10000; i++ {
+		ne := createNodeEvent()
 
-	time.Sleep(100 * time.Millisecond)
-	ne.SetCheckpoint(metrics.Aggregator_Received)
-	ne.SetCheckpoint(metrics.Distributor_Received)
-	ne.SetCheckpoint(metrics.Distributor_Sending)
-	ne.SetCheckpoint(metrics.Distributor_Sent)
-	ne.SetCheckpoint(metrics.Serializer_Encoded)
-	ne.SetCheckpoint(metrics.Serializer_Sent)
-	AddLatencyMetricsAllCheckpoints(ne)
+		//time.Sleep(100 * time.Millisecond)
+		ne.SetCheckpoint(metrics.Aggregator_Received)
+		ne.SetCheckpoint(metrics.Distributor_Received)
+		ne.SetCheckpoint(metrics.Distributor_Sending)
+		ne.SetCheckpoint(metrics.Distributor_Sent)
+		ne.SetCheckpoint(metrics.Serializer_Encoded)
+		ne.SetCheckpoint(metrics.Serializer_Sent)
+		AddLatencyMetricsAllCheckpoints(ne)
+
+		assert.Equal(t, i+1, latencyNewNodeEvents.Aggregator_Received.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyNewNodeEvents.Distributor_Received.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyNewNodeEvents.Distributor_Sending.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyNewNodeEvents.Distributor_Sent.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyNewNodeEvents.Serializer_Encoded.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyNewNodeEvents.Serializer_Sent.GetSummary().TotalCount)
+	}
 
 	for i := 0; i < 5; i++ {
 		updateEvent := updateNodeEvent()
@@ -37,6 +47,13 @@ func Test_PrintLatencyReport(t *testing.T) {
 		updateEvent.SetCheckpoint(metrics.Serializer_Encoded)
 		updateEvent.SetCheckpoint(metrics.Serializer_Sent)
 		AddLatencyMetricsAllCheckpoints(updateEvent)
+
+		assert.Equal(t, i+1, latencyUpdateNodeEvents.Aggregator_Received.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyUpdateNodeEvents.Distributor_Received.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyUpdateNodeEvents.Distributor_Sending.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyUpdateNodeEvents.Distributor_Sent.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyUpdateNodeEvents.Serializer_Encoded.GetSummary().TotalCount)
+		assert.Equal(t, i+1, latencyUpdateNodeEvents.Serializer_Sent.GetSummary().TotalCount)
 	}
 	PrintLatencyReport()
 }
