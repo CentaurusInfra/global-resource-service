@@ -31,19 +31,20 @@ func (c *DistributorPersistHelper) SetWaitCount(count int) {
 func (c *DistributorPersistHelper) PersistNodes(newNodes []*types.LogicalNode) {
 	go func(persistHelper store.StoreInterface, nodes []*types.LogicalNode, wg *sync.WaitGroup) {
 		retries := 0
+		defer func(numberOfNodes int, wg *sync.WaitGroup) {
+			for i := 0; i < numberOfNodes; i++ {
+				wg.Done()
+			}
+		}(len(nodes), wg)
+
 		for {
 			result := persistHelper.PersistNodes(nodes)
 			if result {
-				for i := 0; i < len(nodes); i++ {
-					wg.Done()
-				}
+
 				return
 			} else {
 				// TODO - error processing
 				if retries >= 5 {
-					for i := 0; i < len(nodes); i++ {
-						wg.Done()
-					}
 					return
 				}
 			}
