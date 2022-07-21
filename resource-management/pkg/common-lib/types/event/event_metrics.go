@@ -20,9 +20,6 @@ var latencyMetricsAllCheckpoints *LatencyMetricsAllCheckpoints
 var latencyMetricsLock sync.RWMutex
 
 func init() {
-	if !metrics.ResourceManagementMeasurement_Enabled {
-		return
-	}
 	latencyMetricsAllCheckpoints = new(LatencyMetricsAllCheckpoints)
 	latencyMetricsAllCheckpoints.Aggregator_Received = metrics.NewLatencyMetrics(int(metrics.Aggregator_Received))
 	latencyMetricsAllCheckpoints.Distributor_Received = metrics.NewLatencyMetrics(int(metrics.Distributor_Received))
@@ -84,7 +81,7 @@ func AddLatencyMetricsAllCheckpoints(e *NodeEvent) {
 	} else {
 		klog.Errorf("Event (%v, Id %s, RV %s) does not have %s stamped", e.Type, e.Node.Id, e.Node.ResourceVersion, metrics.Serializer_Sent)
 	}
-	klog.V(4).Infof("[Metrics][Detail] node %v RV %s: %s: %v, %s: %v, %s: %v, %s: %v, %s: %v, %s: %v",
+	klog.V(6).Infof("[Metrics][Detail] node %v RV %s: %s: %v, %s: %v, %s: %v, %s: %v, %s: %v, %s: %v",
 		e.Node.Id, e.Node.ResourceVersion,
 		metrics.Aggregator_Received_Name, agg_received_time.Sub(lastUpdatedTime),
 		metrics.Distributor_Received_Name, dis_received_time.Sub(lastUpdatedTime),
