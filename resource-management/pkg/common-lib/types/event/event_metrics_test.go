@@ -26,6 +26,18 @@ func Test_PrintLatencyReport(t *testing.T) {
 	ne.SetCheckpoint(metrics.Serializer_Encoded)
 	ne.SetCheckpoint(metrics.Serializer_Sent)
 	AddLatencyMetricsAllCheckpoints(ne)
+
+	for i := 0; i < 5; i++ {
+		updateEvent := updateNodeEvent()
+		time.Sleep(50 * time.Millisecond)
+		updateEvent.SetCheckpoint(metrics.Aggregator_Received)
+		updateEvent.SetCheckpoint(metrics.Distributor_Received)
+		updateEvent.SetCheckpoint(metrics.Distributor_Sending)
+		updateEvent.SetCheckpoint(metrics.Distributor_Sent)
+		updateEvent.SetCheckpoint(metrics.Serializer_Encoded)
+		updateEvent.SetCheckpoint(metrics.Serializer_Sent)
+		AddLatencyMetricsAllCheckpoints(updateEvent)
+	}
 	PrintLatencyReport()
 }
 
@@ -75,5 +87,11 @@ func Test_MemoryUsageOfLatencyReport(t *testing.T) {
 func createNodeEvent() *NodeEvent {
 	n := createRandomNode(rvToGenerate+1, defaultLocBeijing_RP1)
 	ne := NewNodeEvent(n, Added)
+	return ne
+}
+
+func updateNodeEvent() *NodeEvent {
+	n := createRandomNode(rvToGenerate+1, defaultLocBeijing_RP1)
+	ne := NewNodeEvent(n, Modified)
 	return ne
 }
