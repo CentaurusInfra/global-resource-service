@@ -288,6 +288,9 @@ func (ns *NodeStore) processNodeEvent(nodeEvent *node.ManagedNodeEvent) bool {
 	case event.Modified:
 		ns.UpdateNode(nodeEvent)
 	default:
+		// TODO - action needs to take when non acceptable events happened
+		klog.Warningf("Invalid event type [%v] for node %v, location %v, rv %v",
+			nodeEvent.GetNodeEvent(), nodeEvent.GetId(), nodeEvent.GetRvLocation(), nodeEvent.GetResourceVersion())
 		return false
 	}
 
