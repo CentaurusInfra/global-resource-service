@@ -212,9 +212,12 @@ func watchNodes(client rmsclient.RmsInterface, clientId string, crv types.Transi
 }
 
 func addWatchLatency(delay time.Duration, ws *stats.WatchStats) {
-	ws.WatchDelayLock.Lock()
+	// Current watch latency is only summarized once. Remove lock/unlock for latency record per event to minimize performance impact
+	// See PR 111.
+	// If later we need to call ws.GetSummary() multiple times, lock needs to be added back.
+	//ws.WatchDelayLock.Lock()
 	ws.WatchDelayPerEvent.AddLatencyMetrics(delay)
-	ws.WatchDelayLock.Unlock()
+	//ws.WatchDelayLock.Unlock()
 }
 
 func logIfProlonged(record *event.NodeEvent, delay time.Duration, ws *stats.WatchStats) {
