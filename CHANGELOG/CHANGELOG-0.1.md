@@ -25,3 +25,6 @@ This is the first release of the Global Resource Service, one of the corner ston
 * Abstraction of resource version, aka, Composite RV ( or CRV ) from nodes from different and global origins. 
 * Cross region data change simulation of both "Daily" and "RP outage" test scenarios
 * Automatic test environment setup, test execution and result collection routines.
+
+
+P.S.  [Performance test results](../resource-management/docs/performance/730-2022-perf-results.md)
