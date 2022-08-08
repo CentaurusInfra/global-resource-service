@@ -1,4 +1,4 @@
-package event
+package types
 
 import (
 	"k8s.io/klog/v2"
@@ -40,7 +40,7 @@ func AddLatencyMetricsAllCheckpoints(e *NodeEvent) {
 	if checkpointsPerEvent == nil {
 		klog.Errorf("Event (%v, Id %s, RV %s) does not have checkpoint stamped", e.Type, e.Node.Id, e.Node.ResourceVersion)
 	}
-	lastUpdatedTime := e.Node.LastUpdatedTime
+	lastUpdatedTime := e.Node.LastUpdatedTime.Time
 
 	agg_received_time := checkpointsPerEvent[metrics.Aggregator_Received]
 	dis_received_time := checkpointsPerEvent[metrics.Distributor_Received]

@@ -13,7 +13,6 @@ import (
 	"global-resource-service/resource-management/pkg/clientSdk/tools/cache"
 	utilruntime "global-resource-service/resource-management/pkg/clientSdk/util/runtime"
 	"global-resource-service/resource-management/pkg/common-lib/types"
-	"global-resource-service/resource-management/pkg/common-lib/types/event"
 	"global-resource-service/resource-management/test/e2e/stats"
 )
 
@@ -184,17 +183,17 @@ func watchNodes(client rmsclient.RmsInterface, clientId string, crv types.Transi
 					klog.Infof("End of results")
 					return
 				}
-				watchDelay := time.Now().UTC().Sub(record.Node.LastUpdatedTime)
+				watchDelay := time.Now().UTC().Sub(record.Node.LastUpdatedTime.Time)
 				addWatchLatency(watchDelay, watchStats)
 				logIfProlonged(&record, watchDelay, watchStats)
 				switch record.Type {
-				case event.Added:
+				case types.Added:
 					store.Add(*record.Node)
 					watchStats.NumberOfAddedNodes++
-				case event.Modified:
+				case types.Modified:
 					store.Update(*record.Node)
 					watchStats.NumberOfUpdatedNodes++
-				case event.Deleted:
+				case types.Deleted:
 					store.Delete(*record.Node)
 					watchStats.NumberOfDeletedNodes++
 
@@ -220,7 +219,7 @@ func addWatchLatency(delay time.Duration, ws *stats.WatchStats) {
 	//ws.WatchDelayLock.Unlock()
 }
 
-func logIfProlonged(record *event.NodeEvent, delay time.Duration, ws *stats.WatchStats) {
+func logIfProlonged(record *types.NodeEvent, delay time.Duration, ws *stats.WatchStats) {
 	if delay > stats.LongWatchThreshold {
 		klog.Warningf("Prolonged watch node from server: %v with time (%v)", record.Node.Id, delay)
 		ws.NumberOfProlongedItems++

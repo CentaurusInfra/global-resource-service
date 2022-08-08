@@ -2,7 +2,6 @@ package store
 
 import (
 	"global-resource-service/resource-management/pkg/common-lib/types"
-	"global-resource-service/resource-management/pkg/common-lib/types/location"
 )
 
 const (
@@ -60,5 +59,5 @@ func (assignment *VirtualNodeAssignment) GetKey() string {
 type VirtualNodeConfig struct {
 	Lowerbound float64
 	Upperbound float64
-	Location   location.Location
+	Location   types.Location
 }

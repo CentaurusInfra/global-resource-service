@@ -5,16 +5,24 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"global-resource-service/resource-management/pkg/common-lib/serializer"
+	"global-resource-service/resource-management/pkg/common-lib/serializer/protobuf"
+	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/test/resourceRegionMgrSimulator/data"
 	simulatorTypes "global-resource-service/resource-management/test/resourceRegionMgrSimulator/types"
 )
 
-type RegionNodeEventHandler struct{}
+type RegionNodeEventHandler struct {
+	serializer serializer.Serializer
+}
 
 // NewRegionNodeEvents creates a Region Node Events handler with the given logger
 //
 func NewRegionNodeEventsHander() *RegionNodeEventHandler {
-	return &RegionNodeEventHandler{}
+	return &RegionNodeEventHandler{
+		//	serializer: localJson.NewSerializer("foo", false),
+		serializer: protobuf.NewSerializer("foo"),
+	}
 }
 
 func (re *RegionNodeEventHandler) SimulatorHandler(rw http.ResponseWriter, r *http.Request) {
@@ -68,7 +76,7 @@ func (re *RegionNodeEventHandler) SimulatorHandler(rw http.ResponseWriter, r *ht
 	// Process initpull or subsequentpull request
 	//
 	if r.URL.Path == InitPullPath || r.URL.Path == SubsequentPullPath {
-		var nodeEvents simulatorTypes.RegionNodeEvents
+		var nodeEvents []types.RpNodeEvents
 		var count uint64
 
 		if r.URL.Path == InitPullPath {
@@ -78,19 +86,19 @@ func (re *RegionNodeEventHandler) SimulatorHandler(rw http.ResponseWriter, r *ht
 		}
 
 		if count == 0 {
-			klog.V(6).Info("Pulling Region Node Events with batch is in the end")
+			klog.V(9).Info("Pulling Region Node Events with batch is in the end")
+			return
 		} else {
 			klog.V(6).Infof("Pulling Region Node Event with final batch size (%v) for (%v) RPs", count, len(nodeEvents))
 		}
 
-		response := &simulatorTypes.ResponseFromRRM{
+		response := &types.ResponseFromRRM{
 			RegionNodeEvents: nodeEvents,
-			RvMap:            aggregatorClientReq.CRV,
 			Length:           uint64(count),
 		}
 
 		// Serialize region node events result to JSON
-		err = response.ToJSON(rw)
+		err = re.serializer.Encode(response, rw)
 
 		if err != nil {
 			klog.Errorf("Error - Unable to marshal json : ", err)
