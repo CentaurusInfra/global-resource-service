@@ -158,4 +158,4 @@ for name in $( ls | grep server);do
 
 done
 
-echo "Please check generated csv report under ./csv/${csv_name}"
+echo "Please check generated csv report under ${DESTINATION}/csv/${csv_name}"
