@@ -117,7 +117,9 @@ func GetRegionNodeModifiedEventsCRV(rvs types.TransitResourceVersionMap) (simula
 			rp := snapshotNodeListEvents[j][i].Node.GeoInfo.ResourcePartition
 			loc := types.RvLocation{Region: location.Region(region), Partition: location.ResourcePartition(rp)}
 
-			if snapshotNodeListEvents[j][i].Node.GetResourceVersionInt64() > rvs[loc] {
+			nodeRV := snapshotNodeListEvents[j][i].Node.GetResourceVersionInt64()
+			requestedRV := rvs[loc]
+			if nodeRV > requestedRV {
 				count += 1
 				pulledNodeListEventsPerRP[indexPerRP] = snapshotNodeListEvents[j][i]
 				indexPerRP += 1
