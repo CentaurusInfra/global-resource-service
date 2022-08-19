@@ -20,23 +20,24 @@ func TestGetRegionNodeModifiedEventsCRV(t *testing.T) {
 	assert.Equal(t, nodesPerRP, len(RegionNodeEventsList[0]))
 	t.Logf("Time to generate %d init events: %v", rpNum*nodesPerRP, duration)
 
+	// generate update node events
+	makeDataUpdate(atEachMin10)
+
 	// get update nodes
 	rvs := make(types.TransitResourceVersionMap)
-	for i := 0; i < location.GetRegionNum(); i++ {
-		for j := 0; j < location.GetRPNum(); j++ {
-			rvLoc := types.RvLocation{
-				Region:    location.Region(i),
-				Partition: location.ResourcePartition(j),
-			}
-			rvs[rvLoc] = uint64(nodesPerRP + 1)
+	for j := 0; j < location.GetRPNum(); j++ {
+		rvLoc := types.RvLocation{
+			Region:    location.Region(RegionId),
+			Partition: location.ResourcePartition(j),
 		}
+		rvs[rvLoc] = uint64(nodesPerRP)
 	}
 	start = time.Now()
 	modifiedEvents, count := GetRegionNodeModifiedEventsCRV(rvs)
-	// 29.219756ms
+	// 29.219756ms -> 3.352µs
 	duration = time.Since(start)
 	assert.NotNil(t, modifiedEvents)
 	assert.Equal(t, 10, len(modifiedEvents))
-	assert.Equal(t, uint64(0), count)
 	t.Logf("Time to get %d update events: %v", count, duration)
+	assert.True(t, count >= uint64(atEachMin10))
 }
