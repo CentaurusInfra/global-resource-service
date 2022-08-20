@@ -243,6 +243,7 @@ func makeDataUpdate(changesThreshold int) {
 			// each node has 10 changes within this cycle
 			nodeCopy := node.Copy()
 			nodeCopy.ResourceVersion = strconv.FormatUint(rvToGenerateRPs, 10)
+			CurrentRVs[rvLoc] = rvToGenerateRPs
 			// record the time to change resource version in resource partition
 			nodeCopy.LastUpdatedTime = time.Now().UTC()
 
