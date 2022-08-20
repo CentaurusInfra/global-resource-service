@@ -234,6 +234,9 @@ func makeDataUpdate(changesThreshold int) {
 		count := 0
 		rvToGenerateRPs := highestRVForRP + 1
 		nodeChangeEvents := make([]*event.NodeEvent, 0)
+		if RegionNodeUpdateEventList[j] != nil && len(*RegionNodeUpdateEventList[j]) > 0 {
+			nodeChangeEvents = *RegionNodeUpdateEventList[j]
+		}
 		for count < nodeChangesPerRP {
 			// Randonly create data update per RP node events list
 			i := rand.Intn(NodesPerRP)
@@ -243,7 +246,6 @@ func makeDataUpdate(changesThreshold int) {
 			// each node has 10 changes within this cycle
 			nodeCopy := node.Copy()
 			nodeCopy.ResourceVersion = strconv.FormatUint(rvToGenerateRPs, 10)
-			CurrentRVs[rvLoc] = rvToGenerateRPs
 			// record the time to change resource version in resource partition
 			nodeCopy.LastUpdatedTime = time.Now().UTC()
 
@@ -251,6 +253,10 @@ func makeDataUpdate(changesThreshold int) {
 			nodeChangeEvents = append(nodeChangeEvents, newEvent)
 
 			count++
+			rvToGenerateRPs++
+		}
+		if nodeChangesPerRP > 0 {
+			CurrentRVs[rvLoc] = rvToGenerateRPs - 1
 		}
 		RegionNodeUpdateEventList[j] = &nodeChangeEvents
 	}
