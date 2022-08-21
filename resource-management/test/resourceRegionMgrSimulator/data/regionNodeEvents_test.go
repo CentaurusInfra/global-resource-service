@@ -57,6 +57,12 @@ func TestGetRegionNodeModifiedEventsCRV(t *testing.T) {
 	t.Logf("Time to get %d update events: %v", count, duration)
 	assert.Equal(t, uint64(atEachMin10), count)
 
+	//check remaining event list
+	assert.Equal(t, 10, len(RegionNodeUpdateEventList))
+	for i := 0; i < 10; i++ {
+		assert.Nil(t, nil, RegionNodeUpdateEventList[i])
+	}
+
 	// update again
 	makeDataUpdate(atEachMin10)
 	makeDataUpdate(atEachMin10)
@@ -75,4 +81,10 @@ func TestGetRegionNodeModifiedEventsCRV(t *testing.T) {
 	assert.Equal(t, 10, len(modifiedEvents))
 	t.Logf("Time to get %d update events: %v", count, duration)
 	assert.Equal(t, atEachMin10*2, int(count))
+
+	//check remaining event list
+	assert.Equal(t, 10, len(RegionNodeUpdateEventList))
+	for i := 0; i < 10; i++ {
+		assert.Nil(t, nil, RegionNodeUpdateEventList[i])
+	}
 }
