@@ -244,12 +244,11 @@ func makeDataUpdate(changesThreshold int) {
 
 			// special case: Consider 5000 changes per RP for 500 nodes per RP
 			// each node has 10 changes within this cycle
-			nodeCopy := node.Copy()
-			nodeCopy.ResourceVersion = strconv.FormatUint(rvToGenerateRPs, 10)
+			node.ResourceVersion = strconv.FormatUint(rvToGenerateRPs, 10)
 			// record the time to change resource version in resource partition
-			nodeCopy.LastUpdatedTime = time.Now().UTC()
+			node.LastUpdatedTime = time.Now().UTC()
 
-			newEvent := event.NewNodeEvent(nodeCopy, event.Modified)
+			newEvent := event.NewNodeEvent(node, event.Modified)
 			nodeChangeEvents = append(nodeChangeEvents, newEvent)
 
 			count++
