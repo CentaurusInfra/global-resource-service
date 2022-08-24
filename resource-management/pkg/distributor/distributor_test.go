@@ -512,6 +512,16 @@ func TestRegistration5MCase(t *testing.T) {
 						lock.Unlock()
 					} else {
 						klog.Infof("Register client %s took %v", clientId, duration)
+
+						// list
+						start = time.Now()
+						nodes, latestRVs, err2 := distributor.ListNodesForClient(clientId)
+						duration = time.Since(start)
+
+						assert.Nil(t, err2)
+						assert.NotNil(t, latestRVs)
+						assert.True(t, len(nodes) >= tt.hostPerScheduler)
+						klog.Infof("List nodes for client %s took %v", clientId, duration)
 					}
 
 					w.Done()
