@@ -23,7 +23,7 @@ const (
 	//RegionlessResourcePath is the default api service url
 	RegionlessResourcePath = "/resource"
 
-	NodeStatusPath = "/nodes/{nodeId}"
+	NodeStatusPath = "/nodes?"
 
 	ListWatchResourcePath = RegionlessResourcePath + "/{clientid}"
 	UpdateResourcePath    = RegionlessResourcePath + "/{clientid}" + "/addResource"

@@ -317,7 +317,7 @@ func getClientId(req *http.Request) string {
 
 // get nodeId from url path
 func getNodeId(req *http.Request) (string, string, string) {
-	// urlpath is fixed "/nodes/nodeId"
+	// urlpath is fixed "/nodes?nodeId=&region=&resourcePartition="
 	nodeId := req.URL.Query().Get("nodeId")
 	regionName := req.URL.Query().Get("region")
 	resourceParitionName := req.URL.Query().Get("resourcePartition")
