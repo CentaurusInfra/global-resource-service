@@ -104,6 +104,8 @@ function get-num-nodes {
         echo "$((${SIM_NUM}*${SIM_RP_NUM}*${NODES_PER_RP}))"
 }
 
+#TODO: 10M suggested_delay_second is an estimated number and may change base on test result
+#1M/2M/5M suggested_delay_second was tested and verified.
 function get-delay-second {
   local suggested_delay_second=10
   if [[ "$(get-num-nodes)" -ge "1000000" ]]; then
