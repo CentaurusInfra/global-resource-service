@@ -49,6 +49,9 @@ var RegionId, RpNum, NodesPerRP int
 // Daily Patttern - 10 modified changes per minute
 const atEachMin10 = 10
 
+// Batch size maximum - temporary solution before it can be configured
+var maxPullUpdateEventsSize = 10000
+
 // Initialize two events list
 // RegionNodeEventsList - for initpull
 //
@@ -112,7 +115,7 @@ func GetRegionNodeModifiedEventsCRV(rvs types.TransitResourceVersionMap) (simula
 	pulledNodeListEvents := make(simulatorTypes.RegionNodeEvents, RpNum)
 	region := RegionId
 
-	var count uint64 = 0
+	count := 0
 	for j := 0; j < RpNum; j++ {
 		loc := types.RvLocation{Region: location.Region(region), Partition: location.ResourcePartition(j)}
 		requestedRV := rvs[loc]
@@ -123,24 +126,39 @@ func GetRegionNodeModifiedEventsCRV(rvs types.TransitResourceVersionMap) (simula
 		}
 
 		pulledNodeListEventsPerRP := make([]*event.NodeEvent, 0)
-		indexPerRP := 0
+		indexForCurrentRP := 0
+		eventsLeft := make([]*event.NodeEvent, 0)
 		for i := 0; i < len(*eventsForRP); i++ {
 			nodeRV := (*eventsForRP)[i].Node.GetResourceVersionInt64()
 			if nodeRV > requestedRV {
-				count += 1
+				count++
 				pulledNodeListEventsPerRP = append(pulledNodeListEventsPerRP, (*eventsForRP)[i])
-				indexPerRP += 1
+				indexForCurrentRP++
+
+				if count >= maxPullUpdateEventsSize {
+					for k := indexForCurrentRP; k < len(*eventsForRP); k++ {
+						eventsLeft = append(eventsLeft, (*eventsForRP)[k])
+					}
+					break
+				}
 			}
 		}
 
 		pulledNodeListEvents[j] = pulledNodeListEventsPerRP
+
+		if count >= maxPullUpdateEventsSize {
+			if indexForCurrentRP < len(*eventsForRP) {
+				RegionNodeUpdateEventList[j] = &eventsLeft
+			}
+			break
+		}
 
 		// clean up event cache
 		RegionNodeUpdateEventList[j] = nil
 	}
 
 	klog.V(9).Infof("Total (%v) Modified events are to be pulled", count)
-	return pulledNodeListEvents, count
+	return pulledNodeListEvents, uint64(count)
 }
 
 ////////////////////////////////////////

@@ -20,11 +20,30 @@ import (
 	"github.com/stretchr/testify/assert"
 	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/location"
+	"sync"
 	"testing"
 	"time"
 )
 
+var oldValue_maxPullUpdateEventsSize int
+var singleTestLock = sync.Mutex{}
+
+func setUp() {
+	singleTestLock.Lock()
+	oldValue_maxPullUpdateEventsSize = maxPullUpdateEventsSize
+}
+
+func tearDown() {
+	maxPullUpdateEventsSize = oldValue_maxPullUpdateEventsSize
+	singleTestLock.Unlock()
+}
+
 func TestGetRegionNodeModifiedEventsCRV(t *testing.T) {
+	setUp()
+	defer tearDown()
+
+	maxPullUpdateEventsSize = 50000
+
 	// create nodes
 	rpNum := 10
 	nodesPerRP := 50000
@@ -113,4 +132,49 @@ func TestGetRegionNodeModifiedEventsCRV(t *testing.T) {
 	for i := 0; i < rpNum; i++ {
 		assert.Nil(t, nil, RegionNodeUpdateEventList[i])
 	}
+}
+
+func TestGetRegionNodeModifiedEventsCRV_WithEventsLimit(t *testing.T) {
+	setUp()
+	defer tearDown()
+
+	maxPullUpdateEventsSize = 10000
+
+	// create nodes
+	rpNum := 10
+	nodesPerRP := 50000
+	start := time.Now()
+	Init("Beijing", rpNum, nodesPerRP)
+	// 2.827539846s
+	duration := time.Since(start)
+	assert.Equal(t, rpNum, len(RegionNodeEventsList))
+	assert.Equal(t, nodesPerRP, len(RegionNodeEventsList[0]))
+	t.Logf("Time to generate %d init events: %v", rpNum*nodesPerRP, duration)
+
+	// generate RP down node events
+	makeOneRPDown()
+
+	// get update nodes
+	rvs := make(types.TransitResourceVersionMap)
+	for j := 0; j < location.GetRPNum(); j++ {
+		rvLoc := types.RvLocation{
+			Region:    location.Region(RegionId),
+			Partition: location.ResourcePartition(j),
+		}
+		rvs[rvLoc] = uint64(nodesPerRP)
+	}
+
+	totalEventCount := uint64(0)
+	for i := 0; i < (nodesPerRP+maxPullUpdateEventsSize-1)/maxPullUpdateEventsSize; i++ { // set a loop limit
+		start = time.Now()
+		modifiedEvents, count := GetRegionNodeModifiedEventsCRV(rvs)
+		duration = time.Since(start)
+		assert.NotNil(t, modifiedEvents)
+		assert.Equal(t, rpNum, len(modifiedEvents))
+		t.Logf("Time to get %d update events in Outage data pattern: %v", count, duration)
+		assert.Equal(t, uint64(maxPullUpdateEventsSize), count)
+
+		totalEventCount += count
+	}
+	assert.Equal(t, uint64(nodesPerRP), totalEventCount)
 }
