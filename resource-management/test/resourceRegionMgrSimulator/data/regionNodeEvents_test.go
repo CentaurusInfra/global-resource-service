@@ -142,7 +142,7 @@ func TestGetRegionNodeModifiedEventsCRV_WithEventsLimit(t *testing.T) {
 
 	// create nodes
 	rpNum := 10
-	nodesPerRP := 50000
+	nodesPerRP := 25000
 	start := time.Now()
 	Init("Beijing", rpNum, nodesPerRP)
 	// 2.827539846s
@@ -164,7 +164,7 @@ func TestGetRegionNodeModifiedEventsCRV_WithEventsLimit(t *testing.T) {
 		rvs[rvLoc] = uint64(nodesPerRP)
 	}
 
-	totalEventCount := uint64(0)
+	totalEventCount := 0
 	for i := 0; i < (nodesPerRP+maxPullUpdateEventsSize-1)/maxPullUpdateEventsSize; i++ { // set a loop limit
 		start = time.Now()
 		modifiedEvents, count := GetRegionNodeModifiedEventsCRV(rvs)
@@ -172,9 +172,11 @@ func TestGetRegionNodeModifiedEventsCRV_WithEventsLimit(t *testing.T) {
 		assert.NotNil(t, modifiedEvents)
 		assert.Equal(t, rpNum, len(modifiedEvents))
 		t.Logf("Time to get %d update events in Outage data pattern: %v", count, duration)
-		assert.Equal(t, uint64(maxPullUpdateEventsSize), count)
+		if maxPullUpdateEventsSize > int(count) {
+			assert.Equal(t, nodesPerRP-totalEventCount, int(count))
+		}
 
-		totalEventCount += count
+		totalEventCount += int(count)
 	}
-	assert.Equal(t, uint64(nodesPerRP), totalEventCount)
+	assert.Equal(t, nodesPerRP, totalEventCount)
 }

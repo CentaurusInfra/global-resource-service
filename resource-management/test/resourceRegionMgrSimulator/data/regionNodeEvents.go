@@ -149,6 +149,8 @@ func GetRegionNodeModifiedEventsCRV(rvs types.TransitResourceVersionMap) (simula
 		if count >= maxPullUpdateEventsSize {
 			if indexForCurrentRP < len(*eventsForRP) {
 				RegionNodeUpdateEventList[j] = &eventsLeft
+			} else {
+				RegionNodeUpdateEventList[j] = nil
 			}
 			break
 		}
