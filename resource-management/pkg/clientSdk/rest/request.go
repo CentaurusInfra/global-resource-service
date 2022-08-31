@@ -24,10 +24,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"global-resource-service/resource-management/pkg/clientSdk/rest/watch"
+	versioned "global-resource-service/resource-management/pkg/clientSdk/rest/watch"
 	"io"
 	"io/ioutil"
-	"k8s.io/klog/v2"
 	"mime"
 	"net/http"
 	"net/url"
@@ -35,6 +34,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"k8s.io/klog/v2"
 
 	"global-resource-service/resource-management/pkg/clientSdk/util/errors"
 	"global-resource-service/resource-management/pkg/clientSdk/util/flowcontrol"
@@ -623,9 +624,9 @@ func glogBody(prefix string, body []byte) {
 	if bytes.IndexFunc(body, func(r rune) bool {
 		return r < 0x0a
 	}) != -1 {
-		klog.Infof("%s:\n%s", prefix, truncateBody(hex.Dump(body)))
+		klog.V(6).Infof("%s:\n%s", prefix, truncateBody(hex.Dump(body)))
 	} else {
-		klog.Infof("%s: %s", prefix, truncateBody(string(body)))
+		klog.V(6).Infof("%s: %s", prefix, truncateBody(string(body)))
 	}
 }
 
