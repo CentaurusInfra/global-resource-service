@@ -167,7 +167,7 @@ if [ "${ENABLE_ADMIN_E2E}" == "true" ]; then
     echo "" >> ./csv/${csv_name}
     echo "" >> ./csv/${csv_name}
     echo "${name}">> ./csv/${csv_name}
-    echo "Metrics Item" "Query Interval","Node Num for each interval","perc50","perc90","perc99">> ./csv/${csv_name}
+    echo "Metrics Item","Query Interval","Node Num for each interval","perc50","perc90","perc99">> ./csv/${csv_name}
     line=$( echo $(grep "\[Metrics\]\[Nodes\]" $name | wc -l ))
     for (( i=1; i<=${line}; i++ )); do
       grep_line=$(echo $(grep "\[Metrics\]\[Nodes\]" $name | sed -n "$i p"))
