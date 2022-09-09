@@ -22,6 +22,7 @@ import (
 	"time"
 
 	utilruntime "global-resource-service/resource-management/pkg/clientSdk/util/runtime"
+	"global-resource-service/resource-management/pkg/common-lib/metrics"
 	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/event"
 )
@@ -94,6 +95,16 @@ func (a *Aggregator) listNodes(client SimInterface, listOpts ListOptions) ([][]*
 	}
 	klog.V(3).Infof("Got [%v] RPs, [%v] nodes from region manager, list duration: %v", len(nodeList), length, end.Sub(start))
 
+	if metrics.ResourceManagementMeasurement_Enabled {
+		for i := 0; i < len(nodeList); i++ {
+			for j := 0; j < len(nodeList[i]); j++ {
+				if nodeList[i][j] != nil {
+					nodeList[i][j].SetCheckpoint(metrics.Aggregator_Received)
+				}
+			}
+		}
+	}
+
 	return nodeList, crv, length
 }
 
@@ -137,5 +148,6 @@ func (a *Aggregator) watchNodes(client SimInterface, crv types.TransitResourceVe
 
 // TODO: lock this function if the distributor cannot handel concurrent node processing
 func (a *Aggregator) processNode(node *event.NodeEvent) {
+	node.SetCheckpoint(metrics.Aggregator_Received)
 	a.EventProcessor.ProcessEvents([]*event.NodeEvent{node})
 }
