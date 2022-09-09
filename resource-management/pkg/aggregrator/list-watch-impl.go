@@ -82,16 +82,22 @@ func (a *Aggregator) LwRun() (err error) {
 	return nil
 }
 
-func (a *Aggregator) listNodes(client SimInterface, listOpts ListOptions) ([][]*event.NodeEvent, types.TransitResourceVersionMap, uint64) {
+func (a *Aggregator) listNodes(client SimInterface, listOpts ListOptions) (nodeList [][]*event.NodeEvent, crv types.TransitResourceVersionMap, length uint64) {
 	var start, end time.Time
+	var err error
 
-	klog.Infof("List resources from region manager ...")
-	start = time.Now().UTC()
-	nodeList, crv, length, err := client.List(listOpts)
-	end = time.Now().UTC()
-	if err != nil {
-		klog.Errorf("failed list resource from region manager. error %v", err)
-		return nil, crv, 0
+	for {
+		klog.Infof("List resources from region manager ...")
+		start = time.Now().UTC()
+		nodeList, crv, length, err = client.List(listOpts)
+		end = time.Now().UTC()
+		if err != nil {
+			klog.Errorf("failed list resource from region manager. error %v. retry in one second", err)
+			time.Sleep(1 * time.Second)
+			continue
+		} else {
+			break
+		}
 	}
 	klog.V(3).Infof("Got [%v] RPs, [%v] nodes from region manager, list duration: %v", len(nodeList), length, end.Sub(start))
 
