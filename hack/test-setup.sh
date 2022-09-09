@@ -268,6 +268,19 @@ else
         fi
 fi
 
+if [ "${ENABLE_ADMIN_E2E}" == "true" ]; then
+        IFS=','; INSTANCE_ADMINCLIENT_ZONE=($ADMINCLIENT_ZONE); unset IFS;
+
+        if [ ${#INSTANCE_ADMINCLIENT_ZONE[@]} != ${ADMINCLIENT_NUM} ]; then
+                echo "Admin Client zone must be same as admin client number, Please double check."
+                exit 1
+        fi
+        if [ ${ADMINCLIENT_NUM} -lt 1 ]; then
+                echo "Admin e2e is enabled, ADMINCLIENT_NUM must be equal or great than 1, Please double check."
+                exit 1
+        fi
+fi
+
 if [ ${SIM_NUM} -gt 0 ]; then
         echo "starting region simulator... "
         if [ ${#INSTANCE_SIM_ZONE[@]} == 1 ]; then
@@ -325,6 +338,19 @@ if [ ${SERVER_NUM} -gt 0 ]; then
         sleep 10
 fi
 
+IFS=','; INSTANCE_ADMINCLIENT_ZONE=($ADMINCLIENT_ZONE); unset IFS;
+if [ "${ENABLE_ADMIN_E2E}" == "true" ]; then
+        echo "starting admin client... "
+        create-machine-image "${ADMINCLIENT_IMAGE_NAME}" "${ADMINCLIENT_SOURCE_INSTANCE}" "${ADMINCLIENT_SOURCE_DISK_ZONE}"
+        index=0
+        for zone in "${INSTANCE_ADMINCLIENT_ZONE[@]}"; do
+                create-vm-instance "${ADMINCLIENT_INSTANCE_PREFIX}-${zone}-${index}" "${zone}" "${ADMINCLIENT_IMAGE_NAME}" &
+                index=$(($index + 1)) 
+        done
+        echo "waiting 10 seconds to get all admin client resources created"
+        sleep 10
+fi
+
  
 echo "Waiting 60 seconds to get all resource started"
 sleep 60
@@ -364,6 +390,18 @@ if [ ${CLIENT_NUM} -gt 0 ]; then
 
         fi
         echo "Client schedulers started at ip addresss: ${CLIENT_IPS%,}"
+fi
+
+if [ "${ENABLE_ADMIN_E2E}" == "true" ]; then
+        if [ ${ADMINCLIENT_NUM} -gt 0 ]; then
+                ADMINCLIENT_IPS=""
+                index=0
+                for zone in "${INSTANCE_ADMINCLIENT_ZONE[@]}"; do
+                        ADMINCLIENT_IPS+="$(get-instance-ip ${ADMINCLIENT_INSTANCE_PREFIX}-${zone}-${index} ${zone}),"
+                        index=$((index + 1)) 
+                done
+                echo "Admin client started at ip addresss: ${ADMINCLIENT_IPS%,}"
+        fi
 fi
 
 if [ ${SERVER_NUM} -gt 0 ]; then
