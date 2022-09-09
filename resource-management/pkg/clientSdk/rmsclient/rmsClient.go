@@ -146,6 +146,10 @@ func (c *rmsClient) List(clientId string, opts ListOptions) ([]*types.LogicalNod
 
 	err = json.Unmarshal(respRet, &resp)
 
+	if err != nil {
+		return nil, nil, err
+	}
+
 	actualCrv := resp.ResourceVersions
 
 	return resp.NodeList, actualCrv, nil
@@ -195,6 +199,10 @@ func (c *rmsClient) Query(nodeId string, regionName string, rpName string) (*typ
 	resp := apiTypes.NodeResponse{}
 
 	err = json.Unmarshal(respRet, &resp)
+
+	if err != nil {
+		return nil, err
+	}
 
 	respNode := resp.Node
 

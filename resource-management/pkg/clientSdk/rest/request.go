@@ -24,7 +24,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	versioned "global-resource-service/resource-management/pkg/clientSdk/rest/watch"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -37,6 +36,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	versioned "global-resource-service/resource-management/pkg/clientSdk/rest/watch"
 	"global-resource-service/resource-management/pkg/clientSdk/util/errors"
 	"global-resource-service/resource-management/pkg/clientSdk/util/flowcontrol"
 	"global-resource-service/resource-management/pkg/clientSdk/util/net"
