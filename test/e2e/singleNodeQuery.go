@@ -63,6 +63,11 @@ func main() {
 	klog.StartFlushDaemon(time.Second * 1)
 	defer klog.Flush()
 
+	//there is two test model:
+	//1. singel node per query per second
+	//2. batch nodes query every minuute.
+	// all var with singelNode is for model #1
+	// all var with batchNode is for nodel #2
 	client := rmsclient.NewRmsClient(cfg)
 	singleNodeStats := stats.NewNodeQueryStats()
 	batchNodeStats := stats.NewNodeQueryStats()
@@ -81,6 +86,8 @@ func main() {
 		klog.Errorf("Please ensure correct service url is provided, for example: 127.0.0.1:8080")
 		os.Exit(0)
 	}
+
+	// get multi nodes from redis for single node model and batch node model
 	redisIp := serviceInfo[0]
 	store := redis.NewRedisClient(redisIp, false)
 	requiredNum := testCfg.batchNodeNum + testCfg.singleNodeNum
@@ -90,15 +97,16 @@ func main() {
 	endTime := time.Since(startTime)
 	klog.Infof("Total %v nodes required from redis server: %v, Total nodes got from redis: %v in duration: %v, detailes: %v\n", requiredNum, redisIp, len(logicalNodes), endTime, logicalNodes)
 
-	singleNode := make([]*types.LogicalNode, testCfg.singleNodeNum)
-	batchNode := make([]*types.LogicalNode, testCfg.batchNodeNum)
+	//split nodes from redis to singleNodeSet and batchNodeSet
+	singleNodeSet := make([]*types.LogicalNode, testCfg.singleNodeNum)
+	batchNodeSet := make([]*types.LogicalNode, testCfg.batchNodeNum)
 
 	for i := 0; i < requiredNum; i++ {
 		if i < testCfg.singleNodeNum {
-			singleNode[i] = logicalNodes[i]
+			singleNodeSet[i] = logicalNodes[i]
 		} else {
 			num := i - testCfg.singleNodeNum
-			batchNode[num] = logicalNodes[i]
+			batchNodeSet[num] = logicalNodes[i]
 		}
 	}
 
@@ -115,8 +123,8 @@ func main() {
 				return
 			default:
 				wgnode.Add(1)
-				randomIndex := rand.Intn(len(singleNode))
-				pick := singleNode[randomIndex]
+				randomIndex := rand.Intn(len(singleNodeSet))
+				pick := singleNodeSet[randomIndex]
 				go queryNodeStatus(wgnode, client, nqs, pick)
 			}
 			time.Sleep(testCfg.singleNodeInterval)
@@ -134,7 +142,7 @@ func main() {
 			default:
 				for i := 0; i < testCfg.batchNodeNum; i++ {
 					wgnode.Add(1)
-					go queryNodeStatus(wgnode, client, nqs, batchNode[i])
+					go queryNodeStatus(wgnode, client, nqs, batchNodeSet[i])
 				}
 			}
 			time.Sleep(testCfg.batchNodeInterval)
