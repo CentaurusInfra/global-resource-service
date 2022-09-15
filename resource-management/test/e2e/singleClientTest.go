@@ -223,7 +223,7 @@ func watchNodes(client rmsclient.RmsInterface, clientId string, crv types.Transi
 					regionEventCount++
 					if regionWatchStart == nil {
 						regionWatchStart = &currentTime
-						klog.Infof("[Throughput] Time to start getting event: %v", regionWatchStart)
+						klog.Infof("[Throughput] Time to start getting event from region %v: %v", regionToWatch, regionWatchStart)
 					} else {
 						regionWatchEnd = &currentTime
 					}

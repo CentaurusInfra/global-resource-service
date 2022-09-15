@@ -37,7 +37,7 @@ func main() {
 	flag.StringVar(&c.RegionName, "region_name", "Beijing", "Region name, if not set, default to Beijing")
 	flag.IntVar(&c.RpNum, "rp_num", 10, "The number of RPs per region, if not set, default to 10")
 	flag.IntVar(&c.NodesPerRP, "nodes_per_rp", 25000, "The number of RPs per region, if not set, default to 25000")
-	flag.IntVar(&c.RPDownNumber, "rp_down_number", 1, "The number of RPs to be pull down")
+	flag.IntVar(&c.RPDownNumber, "rp_down_number", 1, "The number of RPs to be pull down, needs to be <= rp_num")
 	flag.StringVar(&c.MasterPort, "master_port", "9119", "Service port, if not set, default to 9119")
 	flag.StringVar(&c.DataPattern, "data_pattern", "Outage", "Simulator data pattern, if not set, default to Outage Mode")
 	flag.IntVar(&c.WaitTimeForDataChangePattern, "wait_time_for_data_change_pattern", 5, "Wait time for Outage or Daily pattern, if not set, default to 5")
