@@ -18,6 +18,7 @@ package app
 
 import (
 	"fmt"
+	common_lib "global-resource-service/resource-management/pkg/common-lib"
 	"net/http"
 	"net/http/pprof"
 	"sync"
@@ -28,7 +29,6 @@ import (
 
 	"global-resource-service/resource-management/pkg/aggregrator"
 	localMetrics "global-resource-service/resource-management/pkg/common-lib/metrics"
-	"global-resource-service/resource-management/pkg/common-lib/types/event"
 	"global-resource-service/resource-management/pkg/distributor"
 	"global-resource-service/resource-management/pkg/service-api/endpoints"
 	"global-resource-service/resource-management/pkg/store/redis"
@@ -108,7 +108,7 @@ func Run(c *Config) error {
 		return err
 	}
 
-	if localMetrics.ResourceManagementMeasurement_Enabled {
+	if common_lib.ResourceManagementMeasurement_Enabled {
 		// start the event metrics report
 		klog.V(3).Infof("Starting the event metrics reporting routine...")
 		wg.Add(1)
@@ -116,7 +116,7 @@ func Run(c *Config) error {
 			defer wg.Done()
 			for {
 				time.Sleep(c.EventMetricsDumpFrequency)
-				event.PrintLatencyReport()
+				localMetrics.PrintLatencyReport()
 			}
 		}()
 	}
