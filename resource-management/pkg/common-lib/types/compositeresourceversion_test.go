@@ -19,8 +19,9 @@ package types
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"global-resource-service/resource-management/pkg/common-lib/types/location"
 	"testing"
+
+	"global-resource-service/resource-management/pkg/common-lib/types/location"
 )
 
 func TestResourceVersionMap_Marshall_UnMarshall(t *testing.T) {
