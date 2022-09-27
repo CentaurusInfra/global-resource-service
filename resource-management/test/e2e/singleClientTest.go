@@ -214,6 +214,8 @@ func watchNodes(client rmsclient.RmsInterface, clientId string, crv types.Transi
 				}
 				currentTime := time.Now().UTC()
 				watchDelay := currentTime.Sub(record.Node.LastUpdatedTime)
+				klog.Infof("[Metrics][Detail] node %v watch delay %v", record.Node.Id, watchDelay)
+
 				addWatchLatency(watchDelay, watchStats)
 				logIfProlonged(&record, watchDelay, watchStats)
 
