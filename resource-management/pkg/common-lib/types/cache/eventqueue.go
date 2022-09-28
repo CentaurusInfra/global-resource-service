@@ -169,7 +169,7 @@ func (eq *EventQueuesByLocation) Watch(rvs types.InternalResourceVersionMap, cli
 		return err
 	}
 
-	eq.watchChan = make(chan runtime.Object)
+	eq.watchChan = make(chan runtime.Object, 1000)
 	// writing event to channel
 	go func(downstreamCh chan runtime.Object, initEvents []runtime.Object, stopCh chan struct{}, upstreamCh chan runtime.Object) {
 		if downstreamCh == nil {
