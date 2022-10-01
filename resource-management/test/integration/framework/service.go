@@ -31,13 +31,12 @@ import (
 	"global-resource-service/resource-management/test/resourceRegionMgrSimulator/data"
 )
 
-// EtcdMain starts an etcd instance before running tests.
+// ServiceMain to start gcs service and simulator service for testing.
 func ServiceMain(tests func() int) {
 
 	//flush redis store to ensure all testing started with clean store
 	redis.NewRedisClient("localhost", "7379", true)
 	var wg sync.WaitGroup
-	var err error
 
 	wg.Add(1)
 	go func() {
@@ -47,29 +46,27 @@ func ServiceMain(tests func() int) {
 		urls := "localhost:9119"
 		redisPort := "7379"
 		enableMetrics := false
-		err = Start_ServiceAPI(masterIp, masterPort, urls, redisPort, enableMetrics)
+		grs_err := Start_ServiceAPI(masterIp, masterPort, urls, redisPort, enableMetrics)
+		if grs_err != nil {
+			klog.Infof("Starting resource management service failed with error: %v", grs_err)
+		}
 	}()
-
-	if err != nil {
-		klog.Infof("Starting resource management service failed with error: %v", err)
-	}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		regionName := "Beijing"
 		rpNum := 10
-		nodesPerRP := 25000
+		nodesPerRP := 2600
 		masterPort := "9119"
 		dataPattern := "Daily"
-		waittime := 3
+		waittime := 0
 		rpDownnum := 0
-		err = Start_Simulator(regionName, rpNum, nodesPerRP, masterPort, dataPattern, waittime, rpDownnum)
+		sim_err := Start_Simulator(regionName, rpNum, nodesPerRP, masterPort, dataPattern, waittime, rpDownnum)
+		if sim_err != nil {
+			klog.Infof("Starting simulator rest service failed with error: %v", sim_err)
+		}
 	}()
-
-	if err != nil {
-		klog.Infof("Starting simulator rest service failed with error: %v", err)
-	}
 
 	//sleep 30s to get redis write to store
 	time.Sleep(30 * time.Second)

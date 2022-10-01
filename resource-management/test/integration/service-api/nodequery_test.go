@@ -18,8 +18,10 @@ package service_api
 
 import (
 	"global-resource-service/resource-management/pkg/clientSdk/rmsclient"
+	"global-resource-service/resource-management/pkg/common-lib/types"
 	"global-resource-service/resource-management/pkg/common-lib/types/location"
 	"global-resource-service/resource-management/pkg/store/redis"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,11 +29,11 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func TestNodeQuery(t *testing.T) {
+func TestSingleNodeQuery(t *testing.T) {
 
 	cfg := rmsclient.Config{}
 	cfg.ServiceUrl = "localhost:8080"
-	cfg.RequestTimeout = 30 * time.Minute
+	cfg.RequestTimeout = 3 * time.Minute
 	client := rmsclient.NewRmsClient(cfg)
 	// get one nodes from redis for single node model
 	redisIp := "localhost"
@@ -59,4 +61,52 @@ func TestNodeQuery(t *testing.T) {
 	assert.Equal(t, nodeId, respNode.Id)
 	assert.Equal(t, regionName, location.Region(respNode.GeoInfo.Region).String())
 	assert.Equal(t, rpName, location.ResourcePartition(respNode.GeoInfo.ResourcePartition).String())
+	assert.Less(t, duration, time.Second)
+}
+
+func TestBatchNodeQuery(t *testing.T) {
+
+	cfg := rmsclient.Config{}
+	cfg.ServiceUrl = "localhost:8080"
+	cfg.RequestTimeout = 3 * time.Minute
+	client := rmsclient.NewRmsClient(cfg)
+	// get one nodes from redis for single node model
+	redisIp := "localhost"
+	store := redis.NewRedisClient(redisIp, "7379", false)
+	requiredNum := 100
+	startTime := time.Now().UTC()
+	klog.Infof("Requesting nodes from redis server")
+	logicalNodes := store.BatchLogicalNodesInquiry(requiredNum)
+	endTime := time.Since(startTime)
+	klog.Infof("Total %v nodes required from redis server: %v, Total nodes got from redis: %v in duration: %v, detailes: %v\n", requiredNum, redisIp, len(logicalNodes), endTime, logicalNodes)
+
+	var wgNode sync.WaitGroup
+
+	start := time.Now().UTC()
+
+	for i := 0; i < len(logicalNodes); i++ {
+		wgNode.Add(1)
+		respNode, nodeErr := queryNodeStatus(&wgNode, client, logicalNodes[i])
+		if nodeErr != nil {
+			klog.Errorf("Failed to query node status for node ID: %s. error %v", logicalNodes[i].Id, nodeErr)
+		}
+		assert.Equal(t, logicalNodes[i].Id, respNode.Id)
+		assert.Equal(t, location.Region(logicalNodes[i].GeoInfo.Region).String(), location.Region(respNode.GeoInfo.Region).String())
+		assert.Equal(t, location.ResourcePartition(logicalNodes[i].GeoInfo.ResourcePartition).String(), location.ResourcePartition(respNode.GeoInfo.ResourcePartition).String())
+	}
+	wgNode.Wait()
+
+	duration := time.Since(start)
+	assert.Less(t, duration, time.Second)
+}
+
+func queryNodeStatus(wg *sync.WaitGroup, client rmsclient.RmsInterface, node *types.LogicalNode) (respNode *types.LogicalNode, err error) {
+	defer wg.Done()
+	nodeId := node.Id
+	regionName := location.Region(node.GeoInfo.Region).String()
+	rpName := location.ResourcePartition(node.GeoInfo.ResourcePartition).String()
+
+	respNode, err = client.Query(nodeId, regionName, rpName)
+
+	return respNode, err
 }

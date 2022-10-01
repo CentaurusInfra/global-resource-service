@@ -30,26 +30,6 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func TestRegisterClient(t *testing.T) {
-	klog.Infof("List resources from service ...")
-
-	cfg := rmsclient.Config{}
-	cfg.ServiceUrl = "localhost:8080"
-	cfg.ClientFriendlyName = "testclient"
-	cfg.ClientRegion = "Beijing"
-	cfg.InitialRequestTotalMachines = 20000
-	cfg.RegionIdToWatch = "-1"
-
-	cfg.RequestTimeout = 30 * time.Minute
-	client := rmsclient.NewRmsClient(cfg)
-
-	clientId := registerClient(client)
-
-	assert.NotNil(t, clientId, "Expecting not nil client id")
-	assert.False(t, clientId == "", "Expecting non empty client id")
-
-}
-
 func TestListNodes(t *testing.T) {
 	klog.Infof("List resources from service ...")
 
@@ -66,7 +46,14 @@ func TestListNodes(t *testing.T) {
 	listOpts := rmsclient.ListOptions{}
 	listOpts.Limit = 25000
 
-	clientId := registerClient(client)
+	clientId, reg_err := registerClient(client)
+	if reg_err != nil {
+		klog.Errorf("Failed register client. error %v", reg_err)
+	}
+
+	assert.NotNil(t, clientId, "Expecting not nil client id")
+	assert.False(t, clientId == "", "Expecting non empty client id")
+
 	client.Id = clientId
 
 	nodeList, crv, err := client.List(clientId, listOpts)
@@ -79,21 +66,30 @@ func TestListNodes(t *testing.T) {
 	assert.Equal(t, 10, len(crv))
 }
 
-func TestWatchNodes(t *testing.T) {
+//TODO: add watch value verification
+//only watch number verification in this cases, watch 5 minutes and rp has 1 update per minutes, total received watchCount should be >= 4
+func TestWatchNodesCount(t *testing.T) {
 	cfg := rmsclient.Config{}
 	cfg.ServiceUrl = "localhost:8080"
 	cfg.ClientFriendlyName = "testclient"
 	cfg.ClientRegion = "Beijing"
-	cfg.InitialRequestTotalMachines = 20000
+	cfg.InitialRequestTotalMachines = 25000
 	cfg.RegionIdToWatch = "-1"
 
 	cfg.RequestTimeout = 30 * time.Minute
 	client := rmsclient.NewRmsClient(cfg)
 
 	listOpts := rmsclient.ListOptions{}
-	listOpts.Limit = 25000
+	listOpts.Limit = 26000
 
-	clientId := registerClient(client)
+	clientId, reg_err := registerClient(client)
+	if reg_err != nil {
+		klog.Errorf("Failed register client. error %v", reg_err)
+	}
+
+	assert.NotNil(t, clientId, "Expecting not nil client id")
+	assert.False(t, clientId == "", "Expecting non empty client id")
+
 	client.Id = clientId
 
 	nodeList, crv, err := client.List(clientId, listOpts)
@@ -113,6 +109,7 @@ func TestWatchNodes(t *testing.T) {
 	}
 
 	watchCh := watcher.ResultChan()
+	endCh := time.After(5 * time.Minute)
 	watchCount := 0
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -137,26 +134,29 @@ func TestWatchNodes(t *testing.T) {
 					watchCount++
 
 				}
-				if watchCount > 0 {
-					newRV, _ := strconv.Atoi(record.Node.ResourceVersion)
-					assert.NotNil(t, newRV, "Expecting event watched successfully")
+				newRV, _ := strconv.Atoi(record.Node.ResourceVersion)
+				assert.NotNil(t, newRV, "Expecting event watched successfully")
+				if watchCount >= 50 {
 					return
 				}
-			case <-time.After(7 * time.Minute):
-				assert.Fail(t, "Failed to get any watch events within 7 minutes")
+			case <-endCh:
+				if watchCount == 0 {
+					assert.Fail(t, "Failed to get any watch events within 5 minutes")
+				} else {
+					assert.GreaterOrEqual(t, watchCount, 40, "Total received watch with 5 minutes should be more than 40")
+				}
 				return
 			}
 		}
 	}()
 	wg.Wait()
-
 }
 
-func registerClient(client rmsclient.RmsInterface) string {
+func registerClient(client rmsclient.RmsInterface) (cliengId string, err error) {
 	klog.Infof("Register client to service  ...")
 	registrationResp, err := client.Register()
 	if err != nil {
-		klog.Errorf("failed register client to service. error %v", err)
+		return "", err
 	}
-	return registrationResp.ClientId
+	return registrationResp.ClientId, nil
 }
