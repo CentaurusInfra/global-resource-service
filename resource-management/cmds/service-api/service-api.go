@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	common_lib "global-resource-service/resource-management/pkg/common-lib"
 	"os"
 	"strings"
 	"time"
@@ -27,6 +26,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"global-resource-service/resource-management/cmds/service-api/app"
+	common_lib "global-resource-service/resource-management/pkg/common-lib"
 )
 
 func main() {

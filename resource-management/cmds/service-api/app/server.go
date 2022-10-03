@@ -18,7 +18,6 @@ package app
 
 import (
 	"fmt"
-	common_lib "global-resource-service/resource-management/pkg/common-lib"
 	"net/http"
 	"net/http/pprof"
 	"sync"
@@ -28,6 +27,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"global-resource-service/resource-management/pkg/aggregrator"
+	common_lib "global-resource-service/resource-management/pkg/common-lib"
 	localMetrics "global-resource-service/resource-management/pkg/common-lib/metrics"
 	"global-resource-service/resource-management/pkg/distributor"
 	"global-resource-service/resource-management/pkg/service-api/endpoints"
@@ -38,7 +38,7 @@ type Config struct {
 	ResourceUrls              []string
 	MasterIp                  string
 	MasterPort                string
-	RedisPort		  string
+	RedisPort                 string
 	EventMetricsDumpFrequency time.Duration
 }
 
