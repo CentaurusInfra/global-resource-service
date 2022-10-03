@@ -69,7 +69,6 @@ func AddLatencyMetricsAllCheckpoints(e runtime.Object) {
 
 	errMsg := fmt.Sprintf("Event (%v, Id %s, RV %v)", e.GetEventType(), e.GetId(), e.GetResourceVersionInt64()) + " does not have %s stamped"
 	latencyMetricsLock.Lock()
-	defer latencyMetricsLock.Unlock()
 	if !agg_received_time.IsZero() {
 		latencyMetricsAllCheckpoints.Aggregator_Received.AddLatencyMetrics(agg_received_time.Sub(lastUpdatedTime))
 	} else {
@@ -100,6 +99,7 @@ func AddLatencyMetricsAllCheckpoints(e runtime.Object) {
 	} else {
 		klog.Errorf(errMsg, Serializer_Sent)
 	}
+	latencyMetricsLock.Unlock()
 	klog.V(6).Infof("[Metrics][Detail] node %v RV %v: %s: %v, %s: %v, %s: %v, %s: %v, %s: %v, %s: %v",
 		e.GetId(), e.GetResourceVersionInt64(),
 		Aggregator_Received_Name, agg_received_time.Sub(lastUpdatedTime),

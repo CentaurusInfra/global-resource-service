@@ -22,6 +22,9 @@ import (
 	"time"
 )
 
+// Generic Object interface to be used in watch mechanism
+// All objects to be watched needs to implement this interface
+//    in order to use the generic watch mechanism
 type Object interface {
 	GetResourceVersionInt64() uint64
 	GetGeoInfo() types.NodeGeoInfo
