@@ -38,7 +38,7 @@ type Config struct {
 	ResourceUrls              []string
 	MasterIp                  string
 	MasterPort                string
-	RedisPort		  string
+	RedisPort                 string
 	EventMetricsDumpFrequency time.Duration
 }
 
