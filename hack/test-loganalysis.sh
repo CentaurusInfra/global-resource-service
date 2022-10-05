@@ -35,8 +35,14 @@ function grep-string {
   local file_name="$1"
   local start_string="$2"
   local end_string="${3:-}"
+  local line_string="${4:-}"
 
-  grep_string=$(grep "${start_string}" ${file_name})
+  if [ "${line_string}" == "" ]; then
+    grep_string=$(grep "${start_string}" ${file_name})
+  else
+    grep_string=$(grep "${line_string}" ${file_name})
+  fi
+
   if [ "${end_string}" == "" ]; then
     echo "$grep_string" | sed -E "s/.*${start_string}//"
   else
@@ -48,7 +54,13 @@ function grep-string {
 cd ${DESTINATION}
 
 echo "Collecting scheduler test summary to csv"
-echo "file name","RegisterClientDuration","ListDuration","Number of nodes listed","Watch session last","Number of nodes Added","Updated","Deleted","watch prolonged than 1s","Watch perc50","Watch perc90","Watch perc99">> ./csv/${csv_name}
+echo "file name","RegisterClientDuration","ListDuration","Number of nodes listed","Watch session last","Number of nodes Added","Updated","Deleted","watch prolonged than 1s","Watch perc50","Watch perc90","Watch perc99", "Throughput-Duration", "Throughput-Eventcount", "Throughput-Start", "Throughput-End" >> ./csv/${csv_name}
+
+THP_START_MIN=""
+THP_START_FILE=""
+THP_END_MAX=""
+THP_END_FILE=""
+
 for name in $( ls | grep client);do
   start_string="RegisterClientDuration: "
   end_string=""
@@ -94,8 +106,57 @@ for name in $( ls | grep client);do
   end_string=". Total"
   watch_perc99=$(grep-string "${name}" "${start_string}" "${end_string}")
 
-  echo "${name}","${register_client_duration}","${list_duration}","${nodes_listed}","${watch_session_last}","${number_nodes_added}","${number_nodes_updated}","${number_nodes_deleted}","${watch_prolonged_than1s}","${watch_perc50}","${watch_perc90}","${watch_perc99}" >> ./csv/${csv_name}
+  start_string=". Duration"
+  end_string=". Event count"
+  thp_duration=$(grep-string "${name}" "${start_string}" "${end_string}")
+
+  start_string=". Event count"
+  end_string=""
+  thp_eventcount=$(grep-string "${name}" "${start_string}" "${end_string}")
+
+  start_string=": "
+  end_string=" \+0000 UTC"
+  line_string="\[Throughput\] Time to start getting event"
+  thp_start=$(grep-string "${name}" "${start_string}" "${end_string}" "${line_string}")
+  if [[ "${THP_START_MIN}" == ""  ]]; then
+    THP_START_MIN="${thp_start}"
+    THP_START_FILE="${name}"
+  else if [[ "${thp_start}" < "${THP_START_MIN}" ]]; then
+      THP_START_MIN="${thp_start}"
+      THP_START_FILE="${name}"
+    fi
+  fi
+  
+  start_string="\]: "
+  end_string=" \+0000 UTC"
+  line_string="\[Throughput\] Time to get last event"
+  thp_end=$(grep-string "${name}" "${start_string}" "${end_string}" "${line_string}")
+  if [[ "${THP_END_MAX}" == ""  ]]; then
+    THP_END_MAX="${thp_end}"
+    THP_END_FILE="${name}"
+  else if [[ "${thp_end}" > "${THP_END_MAX}" ]]; then
+      THP_END_MAX="${thp_end}"
+      THP_END_FILE="${name}"
+    fi
+  fi
+
+  echo "${name}","${register_client_duration}","${list_duration}","${nodes_listed}","${watch_session_last}","${number_nodes_added}","${number_nodes_updated}","${number_nodes_deleted}","${watch_prolonged_than1s}","${watch_perc50}","${watch_perc90}","${watch_perc99}","${thp_duration}","${thp_eventcount}","${thp_start}","${thp_end}" >> ./csv/${csv_name}
+  client_index=$(($client_index + 1)) 
+
 done
+
+###adding empty line to csv
+echo "" >> ./csv/${csv_name}
+echo "" >> ./csv/${csv_name}
+echo "" >> ./csv/${csv_name}
+echo "" >> ./csv/${csv_name}
+
+echo "Calcuting Throughput to csv"
+echo "Throughput">> ./csv/${csv_name}
+echo "File Name", "Items", "Time">> ./csv/${csv_name}
+echo "${THP_START_FILE}","THP_START_MIN","${THP_START_MIN}">> ./csv/${csv_name}
+echo "${THP_END_FILE}","THP_END_MAX","${THP_END_MAX}">> ./csv/${csv_name}
+
 
 ###adding empty line to csv
 echo "" >> ./csv/${csv_name}
