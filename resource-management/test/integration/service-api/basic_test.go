@@ -24,7 +24,7 @@ import (
 
 	"global-resource-service/resource-management/pkg/clientSdk/rmsclient"
 	utilruntime "global-resource-service/resource-management/pkg/clientSdk/util/runtime"
-	"global-resource-service/resource-management/pkg/common-lib/types/event"
+	"global-resource-service/resource-management/pkg/common-lib/types/runtime"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/klog/v2"
@@ -37,14 +37,14 @@ func TestListNodes(t *testing.T) {
 	cfg.ServiceUrl = "localhost:8080"
 	cfg.ClientFriendlyName = "testclient"
 	cfg.ClientRegion = "Beijing"
-	cfg.InitialRequestTotalMachines = 20000
+	cfg.InitialRequestTotalMachines = 2500
 	cfg.RegionIdToWatch = "-1"
 
 	cfg.RequestTimeout = 30 * time.Minute
 	client := rmsclient.NewRmsClient(cfg)
 
 	listOpts := rmsclient.ListOptions{}
-	listOpts.Limit = 25000
+	listOpts.Limit = 2600
 
 	clientId, reg_err := registerClient(client)
 	if reg_err != nil {
@@ -126,11 +126,11 @@ func TestWatchNodesCount(t *testing.T) {
 					return
 				}
 				switch record.Type {
-				case event.Added:
+				case runtime.Added:
 					watchCount++
-				case event.Modified:
+				case runtime.Modified:
 					watchCount++
-				case event.Deleted:
+				case runtime.Deleted:
 					watchCount++
 
 				}

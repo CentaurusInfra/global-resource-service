@@ -25,7 +25,7 @@ import (
 	"k8s.io/klog/v2"
 
 	apiapp "global-resource-service/resource-management/cmds/service-api/app"
-	localMetrics "global-resource-service/resource-management/pkg/common-lib/metrics"
+	common_lib "global-resource-service/resource-management/pkg/common-lib"
 	"global-resource-service/resource-management/pkg/store/redis"
 	simapp "global-resource-service/resource-management/test/resourceRegionMgrSimulator/app"
 	"global-resource-service/resource-management/test/resourceRegionMgrSimulator/data"
@@ -57,7 +57,7 @@ func ServiceMain(tests func() int) {
 		defer wg.Done()
 		regionName := "Beijing"
 		rpNum := 10
-		nodesPerRP := 2600
+		nodesPerRP := 3000
 		masterPort := "9119"
 		dataPattern := "Daily"
 		waittime := 0
@@ -82,7 +82,7 @@ func Start_ServiceAPI(masterIp string, masterPort string, urls string, redisPort
 	c.MasterPort = masterPort
 	c.ResourceUrls = strings.Split(urls, ",")
 	c.RedisPort = redisPort
-	localMetrics.SetEnableResourceManagementMeasurement(enableMetrics)
+	common_lib.ResourceManagementMeasurement_Enabled = enableMetrics
 	klog.Infof("Starting resource management service")
 	if err := apiapp.Run(c); err != nil {
 		return err
