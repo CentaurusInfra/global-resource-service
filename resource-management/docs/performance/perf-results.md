@@ -19,24 +19,26 @@
 
 |        Region |             Location |
 |--------------:|---------------------:|
-| us Central-1a | Council bluffs, IOWA |
+| us central1-a | Council bluffs, IOWA |
 
 * Simulators:
 
-|        Region |             Location |
-|--------------:|---------------------:|
-| us Central-1a | Council bluffs, IOWA |
-|    us east1-b |    Moncks COrner, SC |
-|    us west2-a |               LA, CA |
-|    us west3-c | Salt Lake city, Utah |
-|    us west4-a |    las Vegas, Nevada |
+|         Region |             Location |
+|---------------:|---------------------:|
+|     us east1-b |    Moncks Corner, SC |
+|  us central1-a | Council bluffs, IOWA |
+|     us west2-a |      Los Angeles, CA |
+|     us west3-c | Salt Lake city, Utah |
+|     us west4-a |    las Vegas, Nevada |
 
 * Schedulers:
 
-|     Region |             Location |
-|-----------:|---------------------:|
-| us west3-b | Salt Lake city, Utah |
-| us east4-b |    Ashburn, Virginia |
+|     Region |             Location |# of Scheduler |
+|-----------:|---------------------:|--------------:|
+| us east1-c |    Moncks Corner, SC |            20 |
+| us central1-a | Council bluffs, IOWA |         20 |
+| us central1-b | Council bluffs, IOWA |         20 |
+| us west3-b | Salt Lake city, Utah |            40 |
 
 ### Performance Result for Release 0.2.0
 <table>
