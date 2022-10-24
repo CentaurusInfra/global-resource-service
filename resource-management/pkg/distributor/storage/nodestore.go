@@ -17,8 +17,11 @@ limitations under the License.
 package storage
 
 import (
+	"bytes"
+	"fmt"
 	"k8s.io/klog/v2"
 	"math"
+	"sort"
 	"sync"
 
 	"global-resource-service/resource-management/pkg/common-lib/hash"
@@ -35,16 +38,37 @@ const (
 	BatchPersistSize     = 100
 )
 
+// Maximal two levels:
+// 1. Original VS
+// 2. Splitted VirtualNodeStores
 type VirtualNodeStore struct {
-	mu              sync.RWMutex
+	mu sync.RWMutex
+
+	// node events belong to current VS
 	nodeEventByHash map[float64]*node.ManagedNodeEvent
-	lowerbound      float64
-	upperbound      float64
+	// lower bound - inclusive - immutable for top level VS, not used for child vs
+	lowerbound float64
+	// upper bound - exclusive - immutable for top level VS, not used for child vs
+	upperbound float64
+
+	// effective lower bound
+	adjustedLowerBound float64
+	// effective upper bound
+	adjustedUpperBound float64
+
+	// empty for child VS
+	splittVirtualNodeStores []*VirtualNodeStore
+
+	// nil for top level VS
+	parentVirtualNodeStore *VirtualNodeStore
 
 	// one virtual store can only have nodes from one resource partition
 	location location.Location
 
-	clientId   string
+	// client current VS is assigned to
+	clientId string
+
+	// event queue that send node events to
 	eventQueue *cache.NodeEventQueue
 }
 
@@ -54,12 +78,98 @@ func (vs *VirtualNodeStore) GetHostNum() int {
 	return len(vs.nodeEventByHash)
 }
 
+func (vs *VirtualNodeStore) GetFreeHostNum() int {
+	if len(vs.splittVirtualNodeStores) > 0 {
+		freeHostCount := 0
+		for i := 0; i < len(vs.splittVirtualNodeStores); i++ {
+			if !vs.splittVirtualNodeStores[i].IsAssignedToClient() {
+				vs.splittVirtualNodeStores[i].mu.RLock()
+				freeHostCount += len(vs.splittVirtualNodeStores[i].nodeEventByHash)
+				vs.splittVirtualNodeStores[i].mu.RUnlock()
+			}
+		}
+		return freeHostCount
+	} else if vs.IsAssignedToClient() {
+		return 0
+	} else {
+		return vs.GetHostNum()
+	}
+}
+
+func (vs *VirtualNodeStore) GetAllFreeChildStores() []*VirtualNodeStore {
+	if len(vs.splittVirtualNodeStores) > 0 {
+		freeStores := make([]*VirtualNodeStore, 0)
+		for i := 0; i < len(vs.splittVirtualNodeStores); i++ {
+			if !vs.splittVirtualNodeStores[i].IsAssignedToClient() {
+				freeStores = append(freeStores, vs.splittVirtualNodeStores[i])
+			}
+		}
+		return freeStores
+	} else if vs.IsAssignedToClient() {
+		return nil
+	} else {
+		return []*VirtualNodeStore{vs}
+	}
+}
+
+func (vs *VirtualNodeStore) IsValidVirtualNodeStore() bool {
+	if vs.parentVirtualNodeStore != nil {
+		if vs.parentVirtualNodeStore.parentVirtualNodeStore != nil { // Only two levels are allowed
+			return false
+		}
+		return vs.parentVirtualNodeStore.IsValidVirtualNodeStore()
+	}
+
+	storeCount := len(vs.splittVirtualNodeStores)
+	if storeCount == 0 {
+		return true
+	} else if storeCount == 1 {
+		return false
+	}
+
+	// check lower/upperbound of top vNode
+	if vs.lowerbound != vs.splittVirtualNodeStores[0].adjustedLowerBound || vs.upperbound != vs.splittVirtualNodeStores[storeCount-1].adjustedUpperBound {
+		return false
+	}
+	// check adjusted lower/upperbound
+	if vs.splittVirtualNodeStores[0].adjustedLowerBound >= vs.splittVirtualNodeStores[0].adjustedUpperBound {
+		return false
+	}
+	isParentVNodeFound := false
+	previousUpperBound := vs.splittVirtualNodeStores[0].adjustedUpperBound
+	for i := 0; i < storeCount; i++ {
+		currentVNode := vs.splittVirtualNodeStores[i]
+		if currentVNode.parentVirtualNodeStore == nil {
+			if !isParentVNodeFound {
+				isParentVNodeFound = true
+			} else {
+				return false
+			}
+		}
+		if i > 0 {
+			if previousUpperBound != currentVNode.adjustedLowerBound || currentVNode.adjustedLowerBound >= currentVNode.adjustedUpperBound {
+				return false
+			}
+			previousUpperBound = currentVNode.adjustedUpperBound
+		}
+	}
+
+	return isParentVNodeFound
+}
+
 func (vs *VirtualNodeStore) GetLocation() location.Location {
 	return vs.location
 }
 
 func (vs *VirtualNodeStore) GetAssignedClient() string {
 	return vs.clientId
+}
+
+func (vs *VirtualNodeStore) IsAssignedToClient() bool {
+	if vs.clientId != "" {
+		return true
+	}
+	return false
 }
 
 func (vs *VirtualNodeStore) AssignToClient(clientId string, eventQueue *cache.NodeEventQueue) bool {
@@ -80,8 +190,15 @@ func (vs *VirtualNodeStore) Release() {
 	vs.clientId = ""
 }
 
-func (vs *VirtualNodeStore) GetRange() (float64, float64) {
+func (vs *VirtualNodeStore) GetOriginalRange() (float64, float64) {
 	return vs.lowerbound, vs.upperbound
+}
+
+func (vs *VirtualNodeStore) GetAdjustedRange() (float64, float64) {
+	if vs.parentVirtualNodeStore == nil && len(vs.splittVirtualNodeStores) == 0 { // top level vNode never being splitted
+		return vs.GetOriginalRange()
+	}
+	return vs.adjustedLowerBound, vs.adjustedUpperBound
 }
 
 // Snapshot generates a list of node for the List() call from a client, and a current RV map to client
@@ -118,6 +235,224 @@ func (vs *VirtualNodeStore) GenerateBookmarkEvent() *node.ManagedNodeEvent {
 		return node.NewManagedNodeEvent(nodeEvent, n.GetLocation())
 	}
 	return nil
+}
+
+// Input requested host count
+// TODO: error cases
+func (vs *VirtualNodeStore) RequestCapacity(requestedHostCount int) []*VirtualNodeStore {
+	vs.mu.RLock()
+	defer vs.mu.RUnlock()
+
+	freeHostNum := vs.GetFreeHostNum()
+	if freeHostNum <= requestedHostCount {
+		klog.Errorf("Free host count (%d) is less than or equal to requested host count (%d)", freeHostNum, requestedHostCount)
+		return nil
+	}
+	if vs.parentVirtualNodeStore != nil {
+		klog.Error("Request free host can only be done from parent node")
+		return nil
+	}
+
+	if len(vs.splittVirtualNodeStores) == 0 { // first splitted vs
+		// create new virtual node store
+		newVSStore := &VirtualNodeStore{
+			mu:                     sync.RWMutex{},
+			nodeEventByHash:        make(map[float64]*node.ManagedNodeEvent, freeHostNum-requestedHostCount),
+			location:               vs.location,
+			parentVirtualNodeStore: vs,
+			adjustedLowerBound:     vs.lowerbound,
+			adjustedUpperBound:     vs.upperbound,
+		}
+		vs.adjustedLowerBound = vs.lowerbound
+		vs.adjustedUpperBound = vs.upperbound
+		vs.moveNodes(vs, newVSStore, freeHostNum-requestedHostCount, true)
+
+		// Add new virtual node into store
+		vs.splittVirtualNodeStores = make([]*VirtualNodeStore, 2)
+		vs.splittVirtualNodeStores[0] = vs
+		vs.splittVirtualNodeStores[1] = newVSStore
+		return []*VirtualNodeStore{vs}
+	} else {
+		freeStores := vs.GetAllFreeChildStores()
+		candidateStores := make([]*VirtualNodeStore, 0)
+		count := 0
+		for i := 0; i < len(freeStores); i++ {
+			newHostCount := count + freeStores[i].GetHostNum()
+			if newHostCount == requestedHostCount {
+				return append(candidateStores, freeStores[i])
+			} else if newHostCount < requestedHostCount {
+				candidateStores = append(candidateStores, freeStores[i])
+			} else {
+				newVSStore := &VirtualNodeStore{
+					mu:                     sync.RWMutex{},
+					nodeEventByHash:        make(map[float64]*node.ManagedNodeEvent, newHostCount-requestedHostCount),
+					location:               vs.location,
+					parentVirtualNodeStore: vs,
+					adjustedLowerBound:     freeStores[i].adjustedLowerBound,
+					adjustedUpperBound:     freeStores[i].adjustedUpperBound,
+				}
+				vs.moveNodes(freeStores[i], newVSStore, newHostCount-requestedHostCount, true)
+
+				vs.splittVirtualNodeStores = append(vs.splittVirtualNodeStores, newVSStore)
+				sort.Sort(vs)
+				return append(candidateStores, freeStores[i])
+			}
+		}
+
+		// this should never be reached
+		klog.Error("Unexpected statement reach. Free host #: %v, requested host #: %v", freeHostNum, requestedHostCount)
+		return candidateStores
+	}
+}
+
+func (vs *VirtualNodeStore) findIndexOfVS(vsToLocate *VirtualNodeStore) int {
+	for i := 0; i < len(vs.splittVirtualNodeStores); i++ {
+		if vs.splittVirtualNodeStores[i] == vsToLocate {
+			return i
+		}
+	}
+	return -1
+}
+
+// Return:
+// 1. virtualNodeStore that is free and can move nodes to, if there is no, create a new one
+// 2. False if adjancent VS is to the left of store[index], true if adjancent VS is to the right of the store[index]
+func (vs *VirtualNodeStore) findAdjacentVacantStore(index int) (*VirtualNodeStore, bool) {
+	if index == 0 { // leftmost
+		if vs.splittVirtualNodeStores[1].clientId == "" { // assigned
+			return vs.splittVirtualNodeStores[1], true
+		}
+	} else if index == len(vs.splittVirtualNodeStores)-1 { // rightmost
+		if vs.splittVirtualNodeStores[index-1].clientId == "" {
+			return vs.splittVirtualNodeStores[index-1], false
+		}
+	} else {
+		if vs.splittVirtualNodeStores[index-1].clientId == "" {
+			return vs.splittVirtualNodeStores[index-1], false
+		} else if vs.splittVirtualNodeStores[index+1].clientId == "" {
+			return vs.splittVirtualNodeStores[index+1], true
+		}
+	}
+
+	// create new store
+	newVSStore := &VirtualNodeStore{
+		mu:                     sync.RWMutex{},
+		nodeEventByHash:        make(map[float64]*node.ManagedNodeEvent),
+		location:               vs.location,
+		parentVirtualNodeStore: vs,
+		lowerbound:             -1,
+		upperbound:             -1,
+	}
+	vs.splittVirtualNodeStores = append(vs.splittVirtualNodeStores, newVSStore)
+	return newVSStore, true
+}
+
+// Move #hostCount from sourceVNS to dstVNS
+// If countFromHighEnd == true, choose hash value from biggest (move to right store)
+// If countFromHighEnd == false, choose hash value from smallest (move to left store)
+// Internal function, assume input is valid, no need to validate
+func (vs *VirtualNodeStore) moveNodes(sourceVNS, dstVNS *VirtualNodeStore, hostCountToMove int, countFromHighEnd bool) error {
+	// optimization
+	if len(dstVNS.nodeEventByHash) == 0 && len(sourceVNS.nodeEventByHash) < hostCountToMove*2 {
+		switchVirtualNodeStore(sourceVNS, dstVNS)
+		sourceVNS, dstVNS = dstVNS, sourceVNS
+		hostCountToMove = len(sourceVNS.nodeEventByHash) - hostCountToMove
+		countFromHighEnd = !countFromHighEnd
+	}
+
+	// sort nodes in sourceVNS by hash value
+	nodeHashes := make([]float64, len(sourceVNS.nodeEventByHash))
+	index := 0
+	for k, _ := range sourceVNS.nodeEventByHash {
+		nodeHashes[index] = k
+		index++
+	}
+	sort.Float64s(nodeHashes)
+
+	// starting position and bound adjustment
+	start := 0
+	if countFromHighEnd {
+		start = index - 1
+		sourceVNS.adjustedUpperBound = nodeHashes[len(sourceVNS.nodeEventByHash)-hostCountToMove]
+		dstVNS.adjustedLowerBound = sourceVNS.adjustedUpperBound
+	} else {
+		sourceVNS.adjustedLowerBound = nodeHashes[hostCountToMove]
+		dstVNS.adjustedUpperBound = sourceVNS.adjustedLowerBound
+	}
+	count := 0
+
+	// move nodes
+	for {
+		nodeHashKey := nodeHashes[start]
+		dstVNS.nodeEventByHash[nodeHashKey] = sourceVNS.nodeEventByHash[nodeHashKey]
+		delete(sourceVNS.nodeEventByHash, nodeHashKey)
+		count++
+
+		if count < hostCountToMove {
+			if countFromHighEnd {
+				start--
+			} else {
+				start++
+			}
+		} else {
+			break
+		}
+	}
+
+	return nil
+}
+
+// This function switch all elements of store1 and store2
+// No need to switch location - it should always be the same (otherwise, nodes cannot be switched)
+func switchVirtualNodeStore(store1, store2 *VirtualNodeStore) {
+	// lock cannot be switched
+	//store1.mu, store2.mu = store2.mu, store1.mu
+	store1.nodeEventByHash, store2.nodeEventByHash = store2.nodeEventByHash, store1.nodeEventByHash
+
+	// lower and upper bounds are immutable
+	//store1.lowerbound, store2.lowerbound = store2.lowerbound, store1.lowerbound
+	//store1.upperbound, store2.upperbound = store2.upperbound, store1.upperbound
+	store1.adjustedLowerBound, store2.adjustedLowerBound = store2.adjustedLowerBound, store1.adjustedLowerBound
+	store1.adjustedUpperBound, store2.adjustedUpperBound = store2.adjustedUpperBound, store1.adjustedUpperBound
+
+	store1.splittVirtualNodeStores, store2.splittVirtualNodeStores = store2.splittVirtualNodeStores, store1.splittVirtualNodeStores
+	// parent stores CANNOT be switched
+	//store1.parentVirtualNodeStore, store2.parentVirtualNodeStore = store2.parentVirtualNodeStore, store1.parentVirtualNodeStore
+
+	if store1.clientId != store2.clientId {
+		store1.clientId, store2.clientId = store2.clientId, store1.clientId
+	}
+	if store1.eventQueue != store2.eventQueue {
+		store1.eventQueue, store2.eventQueue = store2.eventQueue, store1.eventQueue
+	}
+}
+
+// Implement sort.Interface
+func (vs *VirtualNodeStore) Len() int {
+	return len(vs.splittVirtualNodeStores)
+}
+
+func (vs *VirtualNodeStore) Less(i, j int) bool {
+	return vs.splittVirtualNodeStores[i].adjustedLowerBound < vs.splittVirtualNodeStores[j].adjustedLowerBound
+}
+
+func (vs *VirtualNodeStore) Swap(i, j int) {
+	vs.splittVirtualNodeStores[i], vs.splittVirtualNodeStores[j] = vs.splittVirtualNodeStores[j], vs.splittVirtualNodeStores[i]
+}
+
+func (vs *VirtualNodeStore) GetBoundaris() string {
+	vs.mu.RLock()
+	defer vs.mu.RUnlock()
+
+	result := new(bytes.Buffer)
+	result.WriteString(fmt.Sprintf("original boundary (%v, %v), adjusted boundary (%v, %v)\n",
+		vs.lowerbound, vs.upperbound, vs.adjustedLowerBound, vs.adjustedUpperBound))
+	for i := 0; i < len(vs.splittVirtualNodeStores); i++ {
+		result.WriteString(fmt.Sprintf("Child store %d, boundary (%v, %v)\n",
+			i, vs.splittVirtualNodeStores[i].adjustedLowerBound, vs.splittVirtualNodeStores[i].adjustedUpperBound))
+	}
+
+	return string(result.Bytes())
 }
 
 type NodeStore struct {
@@ -200,7 +535,7 @@ func (ns *NodeStore) CheckFreeCapacity(requestedHostNum int) bool {
 	defer ns.nsLock.Unlock()
 	allocatableHostNum := 0
 	for _, vs := range *ns.vNodeStores {
-		allocatableHostNum += vs.GetHostNum()
+		allocatableHostNum += vs.GetFreeHostNum()
 		if allocatableHostNum >= requestedHostNum {
 			return true
 		}
@@ -361,7 +696,23 @@ func (ns *NodeStore) getNodeHash(node *node.ManagedNodeEvent) (float64, int) {
 func (ns *NodeStore) getVirtualNodeStore(node *node.ManagedNodeEvent) (float64, int, *VirtualNodeStore) {
 	hashValue, ringId := ns.getNodeHash(node)
 	virtualNodeIndex := int(math.Floor(hashValue / ns.granularOfRing))
-	return hashValue, ringId, (*ns.vNodeStores)[virtualNodeIndex]
+	parentVNS := (*ns.vNodeStores)[virtualNodeIndex]
+	if len(parentVNS.splittVirtualNodeStores) > 0 && (hashValue < parentVNS.adjustedLowerBound || hashValue >= parentVNS.adjustedUpperBound) {
+		// prevent node splitting happening during search
+		parentVNS.mu.RLock()
+		defer parentVNS.mu.RUnlock()
+		// node shall locate in child VirtualNodeStore
+		// linear search first, might need to change to binary search based on performance
+		for i := 0; i < len(parentVNS.splittVirtualNodeStores); i++ {
+			if hashValue >= parentVNS.splittVirtualNodeStores[i].adjustedLowerBound && hashValue < parentVNS.splittVirtualNodeStores[i].adjustedUpperBound {
+				return hashValue, ringId, parentVNS.splittVirtualNodeStores[i]
+			}
+		}
+
+		klog.Errorf("Could not find node position in virtual node stores. HashValue %v, VS %s", hashValue, parentVNS.GetBoundaris())
+	}
+
+	return hashValue, ringId, parentVNS
 }
 
 func (ns *NodeStore) addNodeToRing(nodeEvent *node.ManagedNodeEvent) (isNewNode bool) {
